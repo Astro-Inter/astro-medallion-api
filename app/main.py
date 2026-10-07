@@ -1,6 +1,8 @@
 import hmac
 import inspect
+import json
 import logging
+import time
 import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -83,6 +85,7 @@ def create_app(
 
     @application.middleware("http")
     async def authenticate(request: Request, call_next):
+        started = time.perf_counter()
         request.state.request_id = str(uuid.uuid4())
         token = application.state.settings.api_token.get_secret_value()
         is_documentation = request.method == "GET" and request.url.path in {
@@ -122,6 +125,17 @@ def create_app(
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Request-Id"] = request.state.request_id
+        # Somente metadados: não registrar token, parâmetros ou dados retornados.
+        route = request.scope.get("route")
+        print(json.dumps({
+            "service_name": "astro-medallion-api",
+            "event": "http_request",
+            "request_id": request.state.request_id,
+            "http_method": request.method,
+            "http_route": getattr(route, "path", "unmatched"),
+            "http_status_code": response.status_code,
+            "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+        }), flush=True)
         return response
 
     @application.get("/health")

@@ -30,6 +30,12 @@ as tabelas físicas `calendario`, `funcionario_posicao`, `resumo_funcionario_dia
 ou `fato_historico_geral_unidade`. Não há migração DROP neste projeto.
 `dim_nr_catalogo` continua sendo uma view de origem.
 
+Na API, os nomes virtuais são `colaborador_posicao` e
+`resumo_colaborador_dia`, com `id_colaborador` e `qtd_colaborador`.
+O fato virtual também publica `qtd_colaborador`. Os nomes físicos acima e a
+procedure preservada em `reference/` descrevem a origem anterior; não são
+renomeados no PostgreSQL.
+
 Para relacionar conclusões, a extração de `turma_funcionario` também expõe
 `id_turma_funcionario`, e `turma` expõe `evento_id`: são chaves de ligação
 necessárias para a integração e estão documentadas no contrato.

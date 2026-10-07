@@ -13,7 +13,7 @@ CALENDAR = """calendario_virtual AS (
 POSITIONS = (
     CALENDAR
     + """, posicao_virtual AS (
-  SELECT cal.data_evento, u.id_usuario AS id_funcionario,
+  SELECT cal.data_evento, u.id_usuario AS id_colaborador,
     c.nome AS cargo, u.unidade_id AS id_unidade
   FROM calendario_virtual cal
   CROSS JOIN public.usuario u
@@ -28,11 +28,11 @@ def virtual_sql(dataset: Dataset) -> str:
     fields = ", ".join(dataset.columns)
     if dataset.name == "calendario":
         return f"WITH {CALENDAR} SELECT {fields} FROM calendario_virtual"
-    if dataset.name == "funcionario_posicao":
+    if dataset.name == "colaborador_posicao":
         return f"WITH {POSITIONS} SELECT {fields} FROM posicao_virtual"
-    if dataset.name == "resumo_funcionario_dia":
+    if dataset.name == "resumo_colaborador_dia":
         return (
-            f"WITH {POSITIONS} SELECT COUNT(DISTINCT id_funcionario) AS qtd_funcionario, "
+            f"WITH {POSITIONS} SELECT COUNT(DISTINCT id_colaborador) AS qtd_colaborador, "
             "data_evento, id_unidade FROM posicao_virtual GROUP BY data_evento, id_unidade"
         )
     raise ApiError(404, "dataset_not_found", "Dataset silver não encontrado.")

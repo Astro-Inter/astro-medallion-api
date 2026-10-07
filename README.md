@@ -38,7 +38,7 @@ documentação. `/v1/datasets` descreve os campos de cada dataset.
 ```sh
 curl -H "Authorization: Bearer $API_TOKEN" http://localhost:8000/v1/datasets
 curl -H "Authorization: Bearer $API_TOKEN" \
-  'http://localhost:8000/v1/silver/resumo_funcionario_dia?from=2026-10-06&to=2026-10-06'
+  'http://localhost:8000/v1/silver/resumo_colaborador_dia?from=2026-10-06&to=2026-10-06'
 ```
 
 Os exemplos curl exigem a variável API_TOKEN no terminal; carregar `.env` no
@@ -66,7 +66,7 @@ fará as chamadas HTTP para a API usando o token Bearer e a paginação.
 ## Dados e processamento
 
 - Bronze: projeção das dez fontes PostgreSQL selecionadas.
-- Silver: calendário, posições e resumo de funcionários calculados sob demanda.
+- Silver: calendário, posições e resumo de colaboradores calculados sob demanda.
 - Gold: fato de unidade calculado conforme a procedure publicada.
 
 As consultas usam parâmetros e transações READ ONLY. As quatro estruturas

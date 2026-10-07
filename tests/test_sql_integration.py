@@ -69,13 +69,13 @@ class SqlIntegrationTests(unittest.TestCase):
                     [r["data_evento"] for r in calendar],
                     [date(2024, 2, 28), date(2024, 2, 29), date(2024, 3, 1)],
                 )
-                self.assertEqual(len(read("funcionario_posicao")), 6)
+                self.assertEqual(len(read("colaborador_posicao")), 6)
                 self.assertEqual(
-                    [r["qtd_funcionario"] for r in read("resumo_funcionario_dia")], [1, 2, 2, 1]
+                    [r["qtd_colaborador"] for r in read("resumo_colaborador_dia")], [1, 2, 2, 1]
                 )
                 fact = read("fato_historico_geral_unidade", date(2024, 3, 1), date(2024, 3, 1))
                 self.assertEqual(
-                    [(r["qtd_nr"], r["qtd_funcionario"], r["qtd_evento"]) for r in fact],
+                    [(r["qtd_nr"], r["qtd_colaborador"], r["qtd_evento"]) for r in fact],
                     [(2, 2, 2), (1, 1, 0), (0, 0, 0)],
                 )
                 self.assertIsNone(fact[0]["id_fato_historico"])

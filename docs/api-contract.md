@@ -12,9 +12,22 @@ está no `.env` local; em produção, use um secret do Cloudflare Workers.
 - `GET /v1/gold/fato_historico_geral_unidade`: snapshot virtual do dia atual.
 
 Nomes canônicos em `app/catalog.py`. Aliases virtuais aceitos: `Calendario`,
-`Func_posicao`, `Resumo_func_dia`. Não existe endpoint para SQL arbitrário.
+`Colab_posicao`, `Resumo_colab_dia`. Não existe endpoint para SQL arbitrário.
 
 ## Parâmetros e resposta
+
+### Nomenclatura das estruturas virtuais
+
+| Estrutura anterior | Nome público atual | Campos renomeados |
+| --- | --- | --- |
+| funcionario_posicao | colaborador_posicao | id_funcionario → id_colaborador |
+| resumo_funcionario_dia | resumo_colaborador_dia | qtd_funcionario → qtd_colaborador |
+| fato_historico_geral_unidade | fato_historico_geral_unidade | qtd_funcionario → qtd_colaborador |
+
+Usar `/v1/silver/colaborador_posicao` e `/v1/silver/resumo_colaborador_dia`.
+Os antigos nomes e aliases das estruturas virtuais deixam de ser aceitos;
+atualizar as chamadas e o mapeamento dos campos no Databricks. A nomenclatura
+das fontes físicas Bronze, como `turma_funcionario`, permanece a do PostgreSQL.
 
 `limit`: 1–1000 (padrão 500); `offset`: 0–1000000 (padrão 0).
 Silver/Gold também aceitam `from` e `to` no formato YYYY-MM-DD, inclusivos,
@@ -24,13 +37,13 @@ Bronze representa as fontes atuais e rejeita filtros de data.
 
 ```json
 {
-  "dataset": "resumo_funcionario_dia",
+  "dataset": "resumo_colaborador_dia",
   "layer": "silver",
   "virtual": true,
   "extracted_at": "2026-10-06T12:00:00.000Z",
   "timezone": "America/Sao_Paulo",
   "period": {"from": "2026-10-06", "to": "2026-10-06"},
-  "data": [{"qtd_funcionario": "45", "data_evento": "2026-10-06", "id_unidade": "1"}],
+  "data": [{"qtd_colaborador": "45", "data_evento": "2026-10-06", "id_unidade": "1"}],
   "pagination": {"limit": 500, "offset": 0, "has_more": false, "next": null}
 }
 ```
@@ -59,7 +72,7 @@ Respostas usam Cache-Control: no-store. Erros não expõem SQL ou credenciais.
 ## Campos adicionais necessários
 
 `turma_funcionario.id_turma_funcionario` e `turma.evento_id` permitem os joins
-participação → conclusão e turma → evento. `resumo_funcionario_dia.id_unidade`
+participação → conclusão e turma → evento. `resumo_colaborador_dia.id_unidade`
 preserva o grão dia/unidade. Todos os outros campos respeitam a projeção
 solicitada. O fato retorna todas as colunas; os valores físicos de ID e data
 de inserção são NULL, conforme `fato-historico.md`.
