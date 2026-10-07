@@ -7,26 +7,14 @@ from pathlib import Path
 import psycopg
 from psycopg.rows import dict_row
 
+from app.bronze.datasets import DATASETS
 from app.config import Settings
 from app.database import ssl_options
 from app.errors import ApiError
 
-TABLES = [
-    "calendario",
-    "resumo_funcionario_dia",
-    "funcionario_posicao",
-    "unidade",
-    "usuario",
-    "dim_nr_catalogo",
-    "turma_funcionario",
-    "turma",
-    "conclusao_evento",
-    "conformidade",
-    "evento",
-    "cargo_nr",
-    "cargo",
-    "fato_historico_geral_unidade",
-]
+# Inspecionar somente as fontes físicas do catálogo Bronze.
+# Estruturas virtuais Silver/Gold são geradas por SELECT e não são fontes.
+TABLES = [dataset.name for dataset in DATASETS]
 
 
 def inspect():
@@ -60,12 +48,6 @@ def inspect():
                 (TABLES,),
             )
             constraints = cursor.fetchall()
-            cursor = connection.execute("""
-                SELECT p.proname AS name, pg_get_functiondef(p.oid) AS definition
-                FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-                WHERE n.nspname = 'public' AND p.proname = 'atualizar_fato_historico'
-            """)
-            procedures = cursor.fetchall()
     path = Path("tmp/source-schema.json")
     path.parent.mkdir(exist_ok=True)
     path.write_text(
@@ -75,7 +57,6 @@ def inspect():
                 "schema": "public",
                 "columns": columns,
                 "constraints": constraints,
-                "procedures": procedures,
             },
             ensure_ascii=False,
             indent=2,
@@ -84,7 +65,7 @@ def inspect():
         + "\n",
         encoding="utf-8",
     )
-    print(f"Schema salvo: {len(columns)} colunas; {len(procedures)} procedures.")
+    print(f"Schema salvo: {len(columns)} colunas; {len(constraints)} constraints.")
 
 
 if __name__ == "__main__":

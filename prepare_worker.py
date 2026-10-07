@@ -1,4 +1,5 @@
 """Prepara apenas o código da API para o empacotador Cloudflare."""
+
 from pathlib import Path
 from shutil import copy2
 

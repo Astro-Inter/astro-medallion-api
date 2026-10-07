@@ -2,8 +2,8 @@
 
 Fonte: procedure `03_atualizar_fato_historico.sql` publicada no workspace do
 banco em 03/10/2026, preservada em `reference/atualizar_fato_historico.sql`.
-A consulta à documentação confirmou a implementação; a inspeção do banco
-ativo ainda depende do CA do Aiven.
+A consulta à documentação confirmou a implementação. A conexão publicada ao
+Aiven usa Hyperdrive com validação TLS e certificado CA configurado.
 
 ## Regras confirmadas na documentação
 

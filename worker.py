@@ -29,9 +29,14 @@ class Default(WorkerEntrypoint):
                 # A origem Aiven é validada em TLS pelo Hyperdrive. O socket
                 # entre Worker e binding é interno à plataforma Cloudflare.
                 connection = await asyncpg.connect(
-                    host=hd.host, port=int(hd.port), user=hd.user,
-                    password=hd.password, database=hd.database,
-                    ssl=False, timeout=10, statement_cache_size=0,
+                    host=hd.host,
+                    port=int(hd.port),
+                    user=hd.user,
+                    password=hd.password,
+                    database=hd.database,
+                    ssl=False,
+                    timeout=10,
+                    statement_cache_size=0,
                 )
                 async with connection.transaction(readonly=True):
                     await connection.execute("SET LOCAL TIME ZONE 'America/Sao_Paulo'")
@@ -39,12 +44,15 @@ class Default(WorkerEntrypoint):
                     rows = await connection.fetch(statement, *(values[key] for key in keys))
                     return [dict(row) for row in rows]
             except (asyncpg.PostgresError, OSError, TimeoutError):
-                raise ApiError(503, "source_unavailable", "A fonte PostgreSQL está indisponível.") from None
+                raise ApiError(
+                    503, "source_unavailable", "A fonte PostgreSQL está indisponível."
+                ) from None
             finally:
                 if connection is not None:
                     await connection.close()
 
         application = create_app(
-            Settings(_env_file=None, api_token=self.env.API_TOKEN), query=query,
+            Settings(_env_file=None, api_token=self.env.API_TOKEN),
+            query=query,
         )
         return await asgi.fetch(application, request, self.env, self.ctx)

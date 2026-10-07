@@ -127,15 +127,20 @@ def create_app(
         response.headers["X-Request-Id"] = request.state.request_id
         # Somente metadados: não registrar token, parâmetros ou dados retornados.
         route = request.scope.get("route")
-        print(json.dumps({
-            "service_name": "astro-medallion-api",
-            "event": "http_request",
-            "request_id": request.state.request_id,
-            "http_method": request.method,
-            "http_route": getattr(route, "path", "unmatched"),
-            "http_status_code": response.status_code,
-            "duration_ms": round((time.perf_counter() - started) * 1000, 2),
-        }), flush=True)
+        print(
+            json.dumps(
+                {
+                    "service_name": "astro-medallion-api",
+                    "event": "http_request",
+                    "request_id": request.state.request_id,
+                    "http_method": request.method,
+                    "http_route": getattr(route, "path", "unmatched"),
+                    "http_status_code": response.status_code,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                }
+            ),
+            flush=True,
+        )
         return response
 
     @application.get("/health")
