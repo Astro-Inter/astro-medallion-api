@@ -10,3 +10,5 @@ __pycache__
 tests
 *.log
 docs
+python_modules
+.venv-workers

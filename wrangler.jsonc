@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "astro-medallion-api",
+  "account_id": "25eb8d3849be3adbff3678f4ec781804",
+  "main": ".wrangler/python-deploy/worker.py",
+  "compatibility_date": "2026-10-07",
+  "compatibility_flags": [
+    "python_workers",
+    "python_workers_314"
+  ],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "2004ed1dbe4a460495e663c42f3b801f"
+    }
+  ],
+  "base_dir": ".wrangler/python-deploy",
+  "build": {
+    "command": "python prepare_worker.py"
+  }
+}

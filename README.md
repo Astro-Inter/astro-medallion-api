@@ -4,6 +4,12 @@ API **Python com FastAPI**, Uvicorn e Psycopg para extrair fontes PostgreSQL
 e gerar estruturas virtuais para consumo no Databricks. Tarefa pai SCRUM-423;
 subtarefas SCRUM-424 a SCRUM-430.
 
+## API publicada
+
+Swagger: https://astro-medallion-api.app-4str0.workers.dev/docs
+
+Hospedada em Cloudflare Workers Free, com autenticação Bearer nas rotas de dados.
+
 ## Executar localmente
 
 Requisitos: Python 3.12 ou superior.
@@ -11,7 +17,7 @@ Requisitos: Python 3.12 ou superior.
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pip install -e ".[local,dev]"
 # Preencher .env a partir de .env.example, se ainda não existir.
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000 --no-access-log
 ```
@@ -91,8 +97,9 @@ ou em um arquivo apontado por `DATABASE_SSL_CA_FILE`.
 
 ## Container
 
-O `Dockerfile` executa a API Python na porta 8080. A configuração específica
-para publicar no Cloudflare foi removida junto com o adaptador de infraestrutura.
+O `Dockerfile` executa a API Python na porta 8080. A implantação gratuita usa Python Workers com `worker.py` e `wrangler.jsonc`.
+O Hyperdrive conecta ao Aiven com validação TLS, sem usar Containers.
+Consulte [a configuração de publicação](docs/cloudflare.md).
 O consumo e a persistência dos dados serão implementados diretamente no Databricks.
 
 A inspeção do banco ativo depende do CA do Aiven. Os metadados gerados pela
