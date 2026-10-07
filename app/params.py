@@ -1,22 +1,13 @@
 import re
-from dataclasses import dataclass
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from starlette.datastructures import QueryParams
 
-from app.catalog import Dataset
 from app.errors import ApiError
+from app.models import Dataset, QueryOptions
 
 TIMEZONE = ZoneInfo("America/Sao_Paulo")
-
-
-@dataclass(frozen=True)
-class QueryOptions:
-    start: date
-    end: date
-    limit: int
-    offset: int
 
 
 def parse_date(value: str) -> date:

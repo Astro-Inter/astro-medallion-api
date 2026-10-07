@@ -38,6 +38,28 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 Os exemplos curl exigem a variável API_TOKEN no terminal; carregar `.env` no
 servidor não a exporta para outros processos. No PowerShell, usar `$env:API_TOKEN`.
 
+## Organização das camadas
+
+```text
+app/
+  bronze/       # catálogo e extração das fontes físicas PostgreSQL
+  silver/       # calendário, posições e resumo diário virtuais
+  gold/         # fato consolidado de unidade virtual
+  main.py       # FastAPI, autenticação e Swagger
+  catalog.py    # catálogo único das três camadas
+  queries.py    # encaminha cada consulta para sua camada
+  models.py     # contratos compartilhados
+integrations/
+  databricks/   # ingestão e persistência das camadas no lakehouse
+  cloudflare/   # adaptador para executar o container Python
+```
+
+Cada camada contém `datasets.py` (campos publicados) e `queries.py` (SQL).
+As rotas correspondentes são `/v1/bronze/{dataset}`, `/v1/silver/{dataset}`
+e `/v1/gold/{dataset}`. A API calcula e entrega os dados; a persistência em
+Delta e o histórico diário ficam no Databricks. Os arquivos em `docs/`
+documentam os contratos e as regras de negócio.
+
 ## Dados e processamento
 
 - Bronze: projeção das dez fontes PostgreSQL selecionadas.
@@ -56,9 +78,9 @@ o cadastro atual; transferências e desativações antigas não são reconstitu�
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe -m ruff check app scripts tests databricks
-.\.venv\Scripts\python.exe -m ruff format --check app scripts tests databricks
-.\.venv\Scripts\python.exe -m scripts.inspect_schema
+.\.venv\Scripts\python.exe -m ruff check app tests integrations/databricks
+.\.venv\Scripts\python.exe -m ruff format --check app tests integrations/databricks
+.\.venv\Scripts\python.exe -m app.bronze.inspect_schema
 ```
 
 Os testes de API usam FastAPI TestClient e fontes simuladas. O teste SQL opcional
@@ -66,14 +88,14 @@ usa `TEST_DATABASE_URL`, cria um schema isolado e desfaz a transação. Use um
 banco de teste. Sem essa variável, o teste é pulado. O SQL gerado também foi
 validado em PostgreSQL em memória durante a migração de implementação.
 
-`scripts.inspect_schema` consulta o schema real em modo somente leitura e
+`app.bronze.inspect_schema` consulta o schema real em modo somente leitura e
 depende da conexão TLS. Para o Aiven, configure o CA em `DATABASE_SSL_CA`
 ou em um arquivo apontado por `DATABASE_SSL_CA_FILE`.
 
 ## Cloudflare
 
 O [Dockerfile](Dockerfile) executa **a API Python** em Cloudflare Containers.
-`cloudflare/gateway.js` é somente o adaptador de infraestrutura que encaminha
+`integrations/cloudflare/gateway.js` é somente o adaptador de infraestrutura que encaminha
 requisições para o container. `package.json` e Wrangler são usados apenas na
 implantação Cloudflare; a aplicação local não depende de Node.js.
 
@@ -87,7 +109,7 @@ Consulte [implantação e operação](docs/cloudflare.md).
 - [Regras do fato histórico](docs/fato-historico.md) — SCRUM-425.
 - [Contrato da API](docs/api-contract.md) — SCRUM-426.
 - Extração FastAPI/Psycopg em `app/main.py` e `app/database.py` — SCRUM-427.
-- Geração virtual em `app/virtual.py` — SCRUM-428.
+- Geração virtual em `app/silver/queries.py` e `app/gold/queries.py` — SCRUM-428.
 - [Integração Databricks](docs/databricks.md) — SCRUM-429.
 - [Cloudflare e operação](docs/cloudflare.md) — SCRUM-430.
 

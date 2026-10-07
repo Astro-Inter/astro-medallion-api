@@ -9,5 +9,5 @@ dist
 __pycache__
 tests
 docs
-databricks
+integrations
 *.log

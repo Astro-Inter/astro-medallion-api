@@ -1,23 +1,17 @@
-from app.catalog import Dataset
-from app.params import QueryOptions
-from app.virtual import virtual_sql
+from app.bronze.queries import source_sql
+from app.gold.queries import virtual_sql as gold_sql
+from app.models import Dataset, QueryOptions
+from app.silver.queries import virtual_sql as silver_sql
+
+BUILDERS = {"bronze": source_sql, "silver": silver_sql, "gold": gold_sql}
 
 
 def build_query(dataset: Dataset, options: QueryOptions) -> tuple[str, dict]:
-    if dataset.virtual:
-        sql = (
-            f"{virtual_sql(dataset)} ORDER BY {', '.join(dataset.key)} "
-            "LIMIT %(limit)s OFFSET %(offset)s"
-        )
-        return sql, {
-            "start": options.start,
-            "end": options.end,
-            "limit": options.limit + 1,
-            "offset": options.offset,
-        }
-    # Table/column names are obtained solely from the fixed internal catalog.
     sql = (
-        f"SELECT {', '.join(dataset.columns)} FROM public.{dataset.name} "
-        f"ORDER BY {', '.join(dataset.key)} LIMIT %(limit)s OFFSET %(offset)s"
+        f"{BUILDERS[dataset.layer](dataset)} ORDER BY {', '.join(dataset.key)} "
+        "LIMIT %(limit)s OFFSET %(offset)s"
     )
-    return sql, {"limit": options.limit + 1, "offset": options.offset}
+    values = {"limit": options.limit + 1, "offset": options.offset}
+    if dataset.virtual:
+        values.update(start=options.start, end=options.end)
+    return sql, values

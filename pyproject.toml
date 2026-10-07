@@ -29,4 +29,4 @@ target-version = "py312"
 select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.ruff.lint.per-file-ignores]
-"databricks/*.py" = ["F821"] # spark/dbutils are provided by the Databricks runtime.
+"integrations/databricks/*.py" = ["F821"] # spark/dbutils are provided by the Databricks runtime.

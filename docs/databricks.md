@@ -6,6 +6,9 @@ O slide de referência separa dados brutos (Bronze), tipagem e qualidade
 
 ## Preparação
 
+Os arquivos de integração ficam em `integrations/databricks/`. As consultas
+da API estão separadas em `app/bronze/`, `app/silver/` e `app/gold/`.
+
 1. Publicar a API e adicionar seu API_TOKEN ao Databricks Secrets em
    `astro_secrets/medallion_api_token`.
 2. Selecionar um catálogo gravável de Unity Catalog. O catálogo federado

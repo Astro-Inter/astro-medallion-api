@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "astro-medallion-api",
-  "main": "cloudflare/gateway.js",
+  "main": "integrations/cloudflare/gateway.js",
   "compatibility_date": "2026-10-06",
   "workers_dev": true,
   "observability": { "enabled": true },

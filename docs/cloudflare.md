@@ -8,7 +8,7 @@ Referências oficiais:
 ## Arquitetura
 
 FastAPI/Uvicorn roda em um container Linux Python 3.13. Psycopg acessa o
-PostgreSQL via libpq com validação TLS. O Worker `cloudflare/gateway.js` inicia
+PostgreSQL via libpq com validação TLS. O Worker `integrations/cloudflare/gateway.js` inicia
 o container, espera `/health` com token e encaminha requisições HTTP para a
 porta 8080. Rotas, autenticação e consultas da API ficam no Python.
 
