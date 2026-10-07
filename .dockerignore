@@ -8,6 +8,5 @@ tmp
 dist
 __pycache__
 tests
-docs
-integrations
 *.log
+docs

@@ -66,7 +66,7 @@ def inspect():
                 WHERE n.nspname = 'public' AND p.proname = 'atualizar_fato_historico'
             """)
             procedures = cursor.fetchall()
-    path = Path("docs/source-schema.json")
+    path = Path("tmp/source-schema.json")
     path.parent.mkdir(exist_ok=True)
     path.write_text(
         json.dumps(

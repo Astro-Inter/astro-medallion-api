@@ -49,16 +49,13 @@ app/
   catalog.py    # catálogo único das três camadas
   queries.py    # encaminha cada consulta para sua camada
   models.py     # contratos compartilhados
-integrations/
-  databricks/   # ingestão e persistência das camadas no lakehouse
-  cloudflare/   # adaptador para executar o container Python
 ```
 
 Cada camada contém `datasets.py` (campos publicados) e `queries.py` (SQL).
 As rotas correspondentes são `/v1/bronze/{dataset}`, `/v1/silver/{dataset}`
 e `/v1/gold/{dataset}`. A API calcula e entrega os dados; a persistência em
-Delta e o histórico diário ficam no Databricks. Os arquivos em `docs/`
-documentam os contratos e as regras de negócio.
+Delta e o histórico diário serão tratados diretamente no Databricks, que
+fará as chamadas HTTP para a API usando o token Bearer e a paginação.
 
 ## Dados e processamento
 
@@ -78,8 +75,8 @@ o cadastro atual; transferências e desativações antigas não são reconstitu�
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe -m ruff check app tests integrations/databricks
-.\.venv\Scripts\python.exe -m ruff format --check app tests integrations/databricks
+.\.venv\Scripts\python.exe -m ruff check app tests
+.\.venv\Scripts\python.exe -m ruff format --check app tests
 .\.venv\Scripts\python.exe -m app.bronze.inspect_schema
 ```
 
@@ -92,26 +89,19 @@ validado em PostgreSQL em memória durante a migração de implementação.
 depende da conexão TLS. Para o Aiven, configure o CA em `DATABASE_SSL_CA`
 ou em um arquivo apontado por `DATABASE_SSL_CA_FILE`.
 
-## Cloudflare
+## Container
 
-O [Dockerfile](Dockerfile) executa **a API Python** em Cloudflare Containers.
-`integrations/cloudflare/gateway.js` é somente o adaptador de infraestrutura que encaminha
-requisições para o container. `package.json` e Wrangler são usados apenas na
-implantação Cloudflare; a aplicação local não depende de Node.js.
+O `Dockerfile` executa a API Python na porta 8080. A configuração específica
+para publicar no Cloudflare foi removida junto com o adaptador de infraestrutura.
+O consumo e a persistência dos dados serão implementados diretamente no Databricks.
 
-O adaptador foi empacotado em modo dry-run. O container completo não foi
-executado, pois o daemon Docker local está parado. A API não foi publicada.
-Consulte [implantação e operação](docs/cloudflare.md).
+A inspeção do banco ativo depende do CA do Aiven. Os metadados gerados pela
+inspeção são salvos em `tmp/source-schema.json` e não entram no Git.
 
 ## Documentação
 
-- [Schema e relacionamentos](docs/schema.md) — SCRUM-424.
-- [Regras do fato histórico](docs/fato-historico.md) — SCRUM-425.
-- [Contrato da API](docs/api-contract.md) — SCRUM-426.
-- Extração FastAPI/Psycopg em `app/main.py` e `app/database.py` — SCRUM-427.
-- Geração virtual em `app/silver/queries.py` e `app/gold/queries.py` — SCRUM-428.
-- [Integração Databricks](docs/databricks.md) — SCRUM-429.
-- [Cloudflare e operação](docs/cloudflare.md) — SCRUM-430.
-
-A inspeção do banco ativo depende do CA do Aiven; execução Spark/Lakeflow
-e migração do histórico físico dependem do ambiente Databricks.
+- [Schema e relacionamentos](docs/schema.md).
+- [Regras do fato histórico](docs/fato-historico.md).
+- [Contrato da API](docs/api-contract.md).
+- [Consumo no Databricks](docs/databricks.md).
+- [Implantação](docs/cloudflare.md).
