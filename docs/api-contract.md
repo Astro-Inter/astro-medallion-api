@@ -1,10 +1,11 @@
 # Contrato v1 (SCRUM-426)
 
-Todos os endpoints exigem `Authorization: Bearer <API_TOKEN>`. O token único
+Os endpoints de dados e saúde exigem `Authorization: Bearer <API_TOKEN>`. O token único
 está no `.env` local; em produção, use um secret do Cloudflare Workers.
 
 - `GET /health`: disponibilidade do processo; não testa a conexão PostgreSQL.
-- `GET /openapi.json`: contrato OpenAPI gerado pelo FastAPI, protegido pelo token.
+- `GET /docs`: Swagger UI; abrir e informar API_TOKEN no botão Authorize.
+- `GET /openapi.json`: contrato OpenAPI público gerado pelo FastAPI para carregar o Swagger.
 - `GET /v1/datasets`: nomes, camadas, campos, chaves, semântica histórica.
 - `GET /v1/bronze/{nome}`: projeção das fontes PostgreSQL selecionadas.
 - `GET /v1/silver/{nome}`: calendário, posições e resumo gerados virtualmente.

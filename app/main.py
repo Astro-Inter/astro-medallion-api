@@ -42,10 +42,17 @@ def create_app(
     application = FastAPI(
         title="Astro Medallion API",
         version="0.1.0",
-        docs_url=None,
+        docs_url="/docs",
         redoc_url=None,
-        openapi_url=None,
-        dependencies=[Depends(HTTPBearer(auto_error=False))],
+        openapi_url="/openapi.json",
+        dependencies=[
+            Depends(
+                HTTPBearer(
+                    auto_error=False,
+                    description="Cole o valor de API_TOKEN do .env, sem o prefixo Bearer.",
+                )
+            )
+        ],
     )
     application.state.settings = settings if settings is not None else Settings()
 
@@ -72,13 +79,18 @@ def create_app(
     async def authenticate(request: Request, call_next):
         request.state.request_id = str(uuid.uuid4())
         token = application.state.settings.api_token.get_secret_value()
+        is_documentation = request.method == "GET" and request.url.path in {
+            "/docs",
+            "/docs/oauth2-redirect",
+            "/openapi.json",
+        }
         header = request.headers.get("Authorization", "")
         supplied = header[7:] if header.startswith("Bearer ") else ""
-        if not token:
+        if not token and not is_documentation:
             response = error_response(
                 request, ApiError(503, "auth_not_configured", "Autenticação não configurada.")
             )
-        elif (
+        elif not is_documentation and (
             not supplied
             or len(supplied) > 1024
             or not hmac.compare_digest(supplied.encode(), token.encode())
@@ -109,10 +121,6 @@ def create_app(
     @application.get("/health")
     async def health():
         return {"status": "ok", "service": "astro-medallion-api"}
-
-    @application.get("/openapi.json", include_in_schema=False)
-    async def openapi():
-        return application.openapi()
 
     @application.get("/v1/datasets")
     async def catalog():

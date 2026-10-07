@@ -81,7 +81,7 @@ acesso a todos os datasets; não há permissões individuais por workspace.
 ## Validação e pendências
 
 - FastAPI executado localmente com Uvicorn e ambiente Python isolado.
-- Onze testes automatizados de API, conexão e consultas passando.
+- Doze testes automatizados de API, Swagger, conexão e consultas passando.
 - Teste adicional de SQL via TEST_DATABASE_URL disponível, pulado sem banco de teste.
 - SQL virtual validado separadamente em PostgreSQL em memória.
 - Ruff, formatação e empacotamento do adaptador Cloudflare validados.

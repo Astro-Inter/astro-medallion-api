@@ -23,7 +23,7 @@ class ApiTests(unittest.TestCase):
             self.fail("Não consultar banco sem autenticação")
 
         with self.client(fail) as client:
-            for path in ("/health", "/v1/datasets", "/openapi.json", "/v1/bronze/usuario"):
+            for path in ("/health", "/v1/datasets", "/v1/bronze/usuario"):
                 self.assertEqual(client.get(path).status_code, 401)
                 self.assertEqual(
                     client.get(path, headers={"Authorization": "Bearer wrong"}).status_code, 401
@@ -92,6 +92,25 @@ class ApiTests(unittest.TestCase):
             self.assertIn("HTTPBearer", schema["components"]["securitySchemes"])
             self.assertEqual(client.post("/health", headers=HEADERS).status_code, 405)
             self.assertEqual(client.get("/invalid", headers=HEADERS).status_code, 404)
+
+    def test_swagger_can_load_before_authorization(self):
+        async def fail(*args):
+            self.fail("A documentação não deve consultar fontes")
+
+        with self.client(fail) as client:
+            response = client.get("/docs")
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("SwaggerUIBundle", response.text)
+            self.assertIn("/openapi.json", response.text)
+            response = client.get("/openapi.json")
+            self.assertEqual(response.status_code, 200)
+            schema = response.json()
+            self.assertEqual(
+                schema["paths"]["/v1/{layer}/{dataset_name}"]["get"]["security"],
+                [{"HTTPBearer": []}],
+            )
+            self.assertEqual(client.get("/health").status_code, 401)
+            self.assertEqual(client.get("/health", headers=HEADERS).status_code, 200)
 
 
 if __name__ == "__main__":

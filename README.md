@@ -23,9 +23,11 @@ Neste checkout o `.env` já tem a conexão autorizada e o token exclusivo criado
 anteriormente, que foi preservado. O arquivo é ignorado pelo Git. `API_TOKEN`
 é a credencial compartilhada da API e não um token de administração Cloudflare.
 
-Todas as rotas exigem `Authorization: Bearer <API_TOKEN>`, inclusive `/health`
-e `/openapi.json`. OpenAPI é gerado pelo FastAPI; as interfaces Swagger/Redoc
-públicas estão desativadas. `/v1/datasets` descreve os campos de cada dataset.
+As rotas de dados e `/health` exigem `Authorization: Bearer <API_TOKEN>`.
+Abra http://localhost:8000/docs para usar o Swagger: clique em **Authorize**,
+cole o valor de `API_TOKEN` do `.env` sem o prefixo `Bearer`, e use **Try it out**
+e **Execute**. `/docs` e `/openapi.json` ficam acessíveis para carregar a
+documentação. `/v1/datasets` descreve os campos de cada dataset.
 
 ```sh
 curl -H "Authorization: Bearer $API_TOKEN" http://localhost:8000/v1/datasets
