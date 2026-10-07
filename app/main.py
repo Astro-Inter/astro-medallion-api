@@ -13,12 +13,18 @@ from starlette.concurrency import run_in_threadpool
 
 from app.catalog import DATASETS, find_dataset
 from app.config import Settings
-from app.database import run_query
 from app.errors import ApiError
 from app.params import parse_options
 from app.queries import build_query
 
 logger = logging.getLogger(__name__)
+
+
+def run_query(settings, sql, values):
+    # O driver nativo é carregado somente na execução local/Uvicorn.
+    from app.database import run_query as local_query
+
+    return local_query(settings, sql, values)
 
 
 def serialize(value):

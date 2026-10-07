@@ -15,3 +15,5 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .ruff_cache/
+python_modules/
+.venv-workers/
