@@ -1,5 +1,28 @@
 # Cloudflare Workers Free (SCRUM-430)
 
+## Grafana Cloud
+
+A exportação nativa de OpenTelemetry usa dois destinos da conta Cloudflare:
+`astro-grafana-traces` (Tempo) e `astro-grafana-logs` (Loki). O endpoint base é
+`https://otlp-gateway-prod-sa-east-1.grafana.net/otlp`, com `/v1/traces` e
+`/v1/logs`, respectivamente. O header Authorization é protegido na configuração
+dos destinos; não faz parte do Git nem do bundle da API.
+
+`wrangler.jsonc` habilita a exportação com amostragem de 100% e `persist: false`.
+A aplicação registra JSON com serviço, request_id, método, rota normalizada,
+status HTTP e duração em milissegundos. Não registra filtros, headers de
+autenticação ou conteúdo dos datasets. Logs de invocação são desativados para
+evitar registrar URLs com parâmetros. Traces são gerados pelo runtime Cloudflare.
+
+No Grafana Explore, selecionar Loki e buscar o serviço `astro-medallion-api`;
+usar Tempo para pesquisar os traces do Worker. O nome de serviço efetivo dos
+traces depende dos atributos emitidos pelo Cloudflare. A exportação nativa não
+inclui métricas OTLP; volume, erros e latência podem ser consultados a partir dos
+logs. Ajustar a amostragem conforme as quotas gratuitas de ingestão do Grafana.
+Verificar em Observability > Destinations o status da entrega após o deploy.
+
+Referência: https://developers.cloudflare.com/observability/export/opentelemetry/grafana-cloud/.
+
 A API Python/FastAPI é publicada como Python Worker, sem Containers e sem
 contratar Workers Paid. Bronze, Silver e Gold continuam em `app/`.
 `worker.py` adapta FastAPI para o ASGI do Cloudflare e usa Asyncpg no binding

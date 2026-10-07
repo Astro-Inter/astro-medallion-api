@@ -10,7 +10,20 @@
   ],
   "workers_dev": true,
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+      "destinations": ["astro-grafana-logs"],
+      "persist": false
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "destinations": ["astro-grafana-traces"],
+      "persist": false
+    }
   },
   "hyperdrive": [
     {
