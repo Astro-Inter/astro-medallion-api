@@ -1,0 +1,11 @@
+{
+  "name": "astro-medallion-cloudflare-adapter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cloudflare:dev": "node node_modules/wrangler/bin/wrangler.js dev",
+    "cloudflare:deploy": "node node_modules/wrangler/bin/wrangler.js deploy"
+  },
+  "devDependencies": { "wrangler": "^4.148.0" },
+  "overrides": { "sharp": "^0.35.5" }
+}

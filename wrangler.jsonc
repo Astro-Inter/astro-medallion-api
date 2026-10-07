@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "astro-medallion-api",
+  "main": "cloudflare/gateway.js",
+  "compatibility_date": "2026-10-06",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "containers": [{
+    "class_name": "FastApiContainer",
+    "scheduling_policy": "durable_object",
+    "images": { "base": { "dockerfile": "./Dockerfile" } }
+  }],
+  "durable_objects": {
+    "bindings": [{ "name": "FASTAPI", "class_name": "FastApiContainer" }]
+  },
+  "exports": { "FastApiContainer": { "type": "durable-object", "storage": "sqlite" } }
+}
