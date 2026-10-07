@@ -32,10 +32,13 @@ existem em uma consulta virtual. A chave lógica é
 `(id_unidade, dt_referencia)`. Os IDs de dimensão seguem os ROW_NUMBER das
 views atuais e podem mudar quando seus conjuntos de linhas mudam.
 
+A nomenclatura pública do headcount virtual é `qtd_colaborador`; ela
+corresponde à antiga coluna `qtd_funcionario` da procedure de referência.
+
 `dim_resumo_funcionario` será reproduzida em CTE a partir de usuario, cargo e
 unidade, eliminando a dependência dessa view auxiliar. O fato utiliza o
 headcount atual dessa dimensão, conforme a procedure, e não a soma de dias
-de resumo_funcionario_dia.
+de resumo_colaborador_dia.
 
 Calendário, posições e resumo são reprocessáveis por intervalo. A projeção
 de posições usa o status, cargo e unidade **atuais** do colaborador e a data

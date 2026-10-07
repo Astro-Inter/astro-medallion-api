@@ -6,8 +6,8 @@ from app.silver.datasets import DATASETS as SILVER
 DATASETS = (*BRONZE, *SILVER, *GOLD)
 ALIASES = {
     "Calendario": "calendario",
-    "Func_posicao": "funcionario_posicao",
-    "Resumo_func_dia": "resumo_funcionario_dia",
+    "Colab_posicao": "colaborador_posicao",
+    "Resumo_colab_dia": "resumo_colaborador_dia",
 }
 
 
