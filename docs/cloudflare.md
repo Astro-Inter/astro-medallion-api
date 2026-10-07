@@ -8,7 +8,8 @@ A exportação nativa de OpenTelemetry usa dois destinos da conta Cloudflare:
 `/v1/logs`, respectivamente. O header Authorization é protegido na configuração
 dos destinos; não faz parte do Git nem do bundle da API.
 
-`wrangler.jsonc` habilita a exportação com amostragem de 100% e `persist: false`.
+`wrangler.jsonc` habilita a exportação com amostragem de 100%, `persist: false`
+e remoção dos parâmetros da URL nos eventos do runtime.
 A aplicação registra JSON com serviço, request_id, método, rota normalizada,
 status HTTP e duração em milissegundos. Não registra filtros, headers de
 autenticação ou conteúdo dos datasets. Logs de invocação são desativados para
