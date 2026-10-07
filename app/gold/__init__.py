@@ -1,0 +1,1 @@
+"""Camada gold da API."""

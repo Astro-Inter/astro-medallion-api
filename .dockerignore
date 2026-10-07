@@ -1,0 +1,12 @@
+.env
+.env.*
+.dev.vars*
+.git
+.venv
+node_modules
+tmp
+dist
+__pycache__
+tests
+*.log
+docs
