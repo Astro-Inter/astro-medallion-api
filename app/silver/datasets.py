@@ -13,13 +13,13 @@ DATASETS = (
         "silver",
         "data_evento id_colaborador cargo id_unidade",
         "data_evento id_colaborador",
-        "current_users_projected_over_dates",
+        "scd_type_2_since_installation",
     ),
     virtual(
         "resumo_colaborador_dia",
         "silver",
         "qtd_colaborador data_evento id_unidade",
         "data_evento id_unidade",
-        "current_users_projected_over_dates",
+        "scd_type_2_since_installation",
     ),
 )

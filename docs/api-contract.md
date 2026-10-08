@@ -1,78 +1,109 @@
-# Contrato v1 (SCRUM-426)
+# Contrato da API 2.0 (SCRUM-423)
 
-Os endpoints de dados e saúde exigem `Authorization: Bearer <API_TOKEN>`. O token único
-está no `.env` local; em produção, use um secret do Cloudflare Workers.
+As URLs `/v1/...` permanecem, mas o contrato de dados é `api_version: "2.0"`.
+O catálogo também mantém `columns` como lista de nomes e acrescenta
+`column_types`, `required_columns`, `date_filter_basis` e `history_capture_started`.
+Os tipos descritos são os tipos lógicos da saída normalizada: `integer`,
+`string`, `date` e `timestamp`. Inteiros continuam sendo strings no JSON, exceto
+ano/mês/dia/trimestre do calendário. NULL continua NULL.
 
-- `GET /health`: disponibilidade do processo; não testa a conexão PostgreSQL.
-- `GET /docs`: Swagger UI; abrir e informar API_TOKEN no botão Authorize.
-- `GET /openapi.json`: contrato OpenAPI público gerado pelo FastAPI para carregar o Swagger.
-- `GET /v1/datasets`: nomes, camadas, campos, chaves, semântica histórica.
-- `GET /v1/bronze/{nome}`: projeção das fontes PostgreSQL selecionadas.
-- `GET /v1/silver/{nome}`: calendário, posições e resumo gerados virtualmente.
-- `GET /v1/gold/fato_historico_geral_unidade`: snapshot virtual do dia atual.
+## Endpoints
 
-Nomes canônicos em `app/catalog.py`. Aliases virtuais aceitos: `Calendario`,
-`Colab_posicao`, `Resumo_colab_dia`. Não existe endpoint para SQL arbitrário.
+Dados, catálogo e saúde exigem `Authorization: Bearer <API_TOKEN>`.
+`/docs` e `/openapi.json` são públicos.
 
-## Parâmetros e resposta
+- `GET /health`: disponibilidade do processo, sem consultar o banco.
+- `GET /health/db`: executa `SELECT 1`; 503 se a fonte estiver indisponível.
+- `GET /v1/datasets`: 14 datasets e seus tipos/regras de histórico.
+- `GET /v1/bronze/{nome}`: snapshot diário normalizado da fonte.
+- `GET /v1/silver/{nome}`: calendário ou posição/resumo com SCD Tipo 2.
+- `GET /v1/gold/fato_historico_geral_unidade`: snapshot diário persistido.
 
-### Nomenclatura das estruturas virtuais
+## Bronze
 
-| Estrutura anterior | Nome público atual | Campos renomeados |
-| --- | --- | --- |
-| funcionario_posicao | colaborador_posicao | id_funcionario → id_colaborador |
-| resumo_funcionario_dia | resumo_colaborador_dia | qtd_funcionario → qtd_colaborador |
-| fato_historico_geral_unidade | fato_historico_geral_unidade | qtd_funcionario → qtd_colaborador |
+As dez fontes preservam seus nomes, acrescentando `snapshot_date` às
+projeções anteriores e expondo `id_conformidade` como chave pública de conformidade. Textos são convertidos para minúsculas e aparados com BTRIM;
+strings vazias viram NULL. Colunas declaradas como date são convertidas para
+DATE no PostgreSQL. Cada fonte é deduplicada pela chave do catálogo.
+Quando uma chave tem versões divergentes, a linha com os menores valores
+normalizados das outras colunas (NULLS LAST) é escolhida de forma determinística;
+isso não representa seleção de uma versão mais recente. Chave obrigatória nula
+impede a publicação de todo o snapshot e retorna 503 `invalid_source_data`.
 
-Usar `/v1/silver/colaborador_posicao` e `/v1/silver/resumo_colaborador_dia`.
-Os antigos nomes e aliases das estruturas virtuais deixam de ser aceitos;
-atualizar as chamadas e o mapeamento dos campos no Databricks. A nomenclatura
-das fontes físicas Bronze, como `turma_funcionario`, permanece a do PostgreSQL.
+`from` e `to` filtram **datas de captura**, não datas de criação/modificação do
+registro. Assim todas as dez fontes suportam períodos, inclusive fontes sem
+timestamp de negócio. A saída inclui uma versão por registro/dia e
+`snapshot_date` distingue essas versões. O padrão é hoje. Dias sem captura
+retornam 409; passado nunca é reconstruído a partir do cadastro atual.
 
-`limit`: 1–1000 (padrão 500); `offset`: 0–1000000 (padrão 0).
-Silver/Gold também aceitam `from` e `to` no formato YYYY-MM-DD, inclusivos,
-até hoje, com no máximo 366 dias. Silver usa 1º de janeiro até hoje por
-padrão. Gold aceita somente hoje. Fuso de negócio: America/Sao_Paulo.
-Bronze representa as fontes atuais e rejeita filtros de data.
+## Silver
+
+`calendario` gera as datas solicitadas. `colaborador_posicao` lê
+`astro_api.usuario_history`, que guarda versões de status, tipo, cargo e unidade,
+incluindo o nome do cargo. O estado considerado é o fim do dia em São Paulo;
+para hoje, o instante de captura. Colaboradores ativos são incluídos a partir de
+`criado_em`. `resumo_colaborador_dia` inclui todas as unidades atuais em todos
+os dias solicitados, com zero quando não existem colaboradores.
+
+A captura SCD começa na instalação da migração. Períodos anteriores são
+recusados com 409. O início padrão é o maior entre 1º de janeiro e a primeira
+data disponível. Calendário não depende desse limite. O cadastro de unidades
+da grade de zeros é o cadastro atual; não existe SCD de unidades neste contrato.
+
+## Gold
+
+Use `date=YYYY-MM-DD` para hoje ou para um snapshot já capturado. `from` e `to`
+continuam aceitos se forem iguais; não combine os dois formatos. Não há
+reconstrução retroativa: dia sem snapshot retorna 409.
+
+Eventos são contados para **todas** as unidades, considerando evento diferente
+de cancelado e gestor ativo. `id_unidade` filtra opcionalmente o resultado.
+Contagens de NRs/colaboradores e unidades com zeros continuam disponíveis.
+
+`id_fato_historico` é obtido da sequência de controle na primeira captura e
+`dt_criacao` registra essa captura. `id_dim_resumo` é uma chave determinística
+de 60 bits baseada em unidade/data, não mais o ROW_NUMBER do conjunto atual.
+IDs de sequência podem ter lacunas; hashes têm risco teórico de colisão e não
+devem ser tratados como uma chave estrangeira da antiga view de dimensão.
+
+## Paginação consistente
+
+A primeira requisição cria uma extração imutável no PostgreSQL. Continue
+usando **a URL inteira de `pagination.next`**, incluindo `snapshot` e filtros.
+Offset sozinho não é mais aceito quando maior que zero. Trocar filtros ou
+dataset com o mesmo UUID retorna 409. As páginas não voltam a consultar a fonte.
+As extrações temporárias expiram em 3.600 segundos por padrão; reinicie a carga
+se receber 409 `snapshot_unavailable`. Snapshots diários de origem são retidos.
+`limit`: 1–1000, padrão 500; `offset`: até 1000000. Intervalos: até 366 dias,
+inclusivos, sem datas futuras. Fuso de negócio: America/Sao_Paulo.
 
 ```json
 {
+  "api_version": "2.0",
   "dataset": "resumo_colaborador_dia",
   "layer": "silver",
   "virtual": true,
-  "extracted_at": "2026-10-06T12:00:00.000Z",
+  "extracted_at": "2026-10-08T12:00:00+00:00",
   "timezone": "America/Sao_Paulo",
-  "period": {"from": "2026-10-06", "to": "2026-10-06"},
-  "data": [{"qtd_colaborador": "45", "data_evento": "2026-10-06", "id_unidade": "1"}],
-  "pagination": {"limit": 500, "offset": 0, "has_more": false, "next": null}
+  "period": {"from": "2026-10-08", "to": "2026-10-08"},
+  "data": [{"qtd_colaborador": "0", "data_evento": "2026-10-08", "id_unidade": "2"}],
+  "pagination": {"limit": 500, "offset": 0, "has_more": false,
+    "snapshot": "00000000-0000-0000-0000-000000000001", "next": null}
 }
 ```
 
-Datas SQL DATE são strings YYYY-MM-DD. Identificadores e contagens inteiras
-são strings decimais para preservar precisão. Atributos do calendário
-(ano, mes, dia, trimestre) são números JSON. TIMESTAMP sem timezone representa o horário
-local do banco (America/Sao_Paulo) e é emitido sem offset; extracted_at é UTC.
-Valores NULL são preservados. `id_unidade` no resumo será BIGINT vindo da fonte,
-sem o limite INT da antiga tabela física. As chaves de paginação incluem
-`conformidade.id_conformidade` internamente, sem expor essa coluna.
+## Rate limiting e erros
 
-Cada página é uma transação READ ONLY consistente. As fontes podem mudar
-entre páginas ou datasets; paginação por offset não é um snapshot congelado.
-Para cargas consistentes entre páginas, executar durante janela sem alterações
-ou integrar CDC/snapshot persistido numa evolução futura.
+O limite padrão é 120 requisições por minuto **compartilhadas por API_TOKEN**,
+com contador atômico no PostgreSQL, inclusive entre instâncias do Worker.
+Documentação e `/health` ficam fora desse limite. Respostas após a contagem
+incluem `X-RateLimit-Limit`, `X-RateLimit-Remaining` e `X-RateLimit-Reset` (Unix).
+429 inclui `Retry-After` até a próxima janela. 503 inclui `Retry-After: 5` por
+padrão. Ausência de headers de taxa em uma falha de armazenamento não significa
+limite infinito. Nenhum valor de token é persistido: o contador usa SHA-256.
 
-## Erros
-
-Formato: `{"error":{"code":"invalid_date","message":"..."},"request_id":"..."}`.
-400 parâmetros inválidos; 401 token ausente/incorreto; 404 recurso inexistente;
-405 método diferente de GET; 409 histórico do fato indisponível;
-503 credenciais ausentes ou fonte PostgreSQL indisponível.
-Respostas usam Cache-Control: no-store. Erros não expõem SQL ou credenciais.
-
-## Campos adicionais necessários
-
-`turma_funcionario.id_turma_funcionario` e `turma.evento_id` permitem os joins
-participação → conclusão e turma → evento. `resumo_colaborador_dia.id_unidade`
-preserva o grão dia/unidade. Todos os outros campos respeitam a projeção
-solicitada. O fato retorna todas as colunas; os valores físicos de ID e data
-de inserção são NULL, conforme `fato-historico.md`.
+Erros incluem `api_version`, `error.code`, `error.message` e `request_id`.
+400 parâmetros inválidos; 401 autenticação; 404 dataset; 405 método;
+409 histórico/snapshot indisponível; 429 limite; 503 fonte, armazenamento,
+chave nula ou extração acima de MAX_SNAPSHOT_ROWS (padrão 100000).
+Não registrar nem retornar SQL, credenciais ou conteúdo pessoal nos logs.

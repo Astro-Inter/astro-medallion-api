@@ -1,114 +1,55 @@
 # Astro Medallion API
 
-API **Python com FastAPI**, Uvicorn e Psycopg para extrair fontes PostgreSQL
-e gerar estruturas virtuais para consumo no Databricks. Tarefa pai SCRUM-423;
-subtarefas SCRUM-424 a SCRUM-430.
+API Python/FastAPI para extrair fontes PostgreSQL e fornecer estruturas
+medalhão ao Databricks. Card: SCRUM-423. Versão: 0.2.0 / contrato JSON 2.0.
 
-## API publicada
+Swagger publicado: https://astro-medallion-api.app-4str0.workers.dev/docs
 
-Swagger: https://astro-medallion-api.app-4str0.workers.dev/docs
+## Camadas
 
-Hospedada em Cloudflare Workers Free, com autenticação Bearer nas rotas de dados.
+- Bronze: dez fontes com textos normalizados, deduplicação por chave e
+  snapshots diários. Filtros de data referem-se à captura, não a mudanças da fonte.
+- Silver: calendário, posição histórica via SCD Tipo 2 e resumo por unidade/dia
+  com linhas zeradas.
+- Gold: fato por unidade em snapshots imutáveis, disponível para datas capturadas;
+  eventos de todas as unidades, IDs/horários persistidos e dimensão determinística.
+
+A API acessa as fontes por leitura. Escreve somente nas estruturas de controle
+do schema `astro_api`; não grava diretamente no Databricks. O consumidor em
+`databricks/ingest_api.py` grava as 14 tabelas no schema silver sem prefixos,
+com 13 cargas diárias e a fato semanal.
 
 ## Executar localmente
 
-Requisitos: Python 3.12 ou superior.
+Requer Python >= 3.12. Crie um ambiente virtual, instale
+`pip install -r requirements.lock` e `pip install -e ".[local,dev]"`.
+Configure `.env` a partir de `.env.example` e execute
+`python -m uvicorn app.main:app --port 8000 --no-access-log`.
+Nunca versionar `.env`, certificados privados nem tokens.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.lock
-.\.venv\Scripts\python.exe -m pip install -e ".[local,dev]"
-# Preencher .env a partir de .env.example, se ainda não existir.
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000 --no-access-log
-```
+Antes de publicar esta versão, aplique a migração com o dono do banco e
+configure as permissões/cache conforme [instalação do histórico](docs/history-deployment.md).
+Sem essa preparação os endpoints dependentes de controle retornarão 503.
+Não há reconstrução de estados anteriores à implantação sem histórico existente.
 
-Em Linux/macOS, usar `.venv/bin/python` nos mesmos comandos. `requirements.lock`
-fixa as versões de runtime validadas; os extras dev incluem cliente HTTP e Ruff.
+## Endpoints e contrato
 
-Neste checkout o `.env` já tem a conexão autorizada e o token exclusivo criado
-anteriormente, que foi preservado. O arquivo é ignorado pelo Git. `API_TOKEN`
-é a credencial compartilhada da API e não um token de administração Cloudflare.
+Autenticação: `Authorization: Bearer <API_TOKEN>`. `/docs` e `/openapi.json`
+são públicos. `/health` verifica o processo; `/health/db` consulta PostgreSQL.
+`/v1/datasets` publica nomes, tipos, chaves e início de captura.
 
-As rotas de dados e `/health` exigem `Authorization: Bearer <API_TOKEN>`.
-Abra http://localhost:8000/docs para usar o Swagger: clique em **Authorize**,
-cole o valor de `API_TOKEN` do `.env` sem o prefixo `Bearer`, e use **Try it out**
-e **Execute**. `/docs` e `/openapi.json` ficam acessíveis para carregar a
-documentação. `/v1/datasets` descreve os campos de cada dataset.
+Dados: `/v1/bronze/{dataset}`, `/v1/silver/{dataset}`,
+`/v1/gold/fato_historico_geral_unidade?date=YYYY-MM-DD`.
+Use a URL inteira de `pagination.next`; ela congela a extração pelo UUID snapshot.
+Snapshots expirados exigem reinício. `limit` máximo 1000; intervalos até 366 dias.
+O limite padrão é 120 requests/minuto por API_TOKEN e tem headers de controle.
 
-```sh
-curl -H "Authorization: Bearer $API_TOKEN" http://localhost:8000/v1/datasets
-curl -H "Authorization: Bearer $API_TOKEN" \
-  'http://localhost:8000/v1/silver/resumo_colaborador_dia?from=2026-10-06&to=2026-10-06'
-```
+Detalhes: [contrato da API](docs/api-contract.md),
+[consumo Databricks](docs/databricks.md), [fontes](docs/schema.md),
+[Gold](docs/fato-historico.md), [Cloudflare](docs/cloudflare.md).
 
-Os exemplos curl exigem a variável API_TOKEN no terminal; carregar `.env` no
-servidor não a exporta para outros processos. No PowerShell, usar `$env:API_TOKEN`.
+## Testes
 
-## Organização das camadas
-
-```text
-app/
-  bronze/       # catálogo e extração das fontes físicas PostgreSQL
-  silver/       # calendário, posições e resumo diário virtuais
-  gold/         # fato consolidado de unidade virtual
-  main.py       # FastAPI, autenticação e Swagger
-  catalog.py    # catálogo único das três camadas
-  queries.py    # encaminha cada consulta para sua camada
-  models.py     # contratos compartilhados
-```
-
-Cada camada contém `datasets.py` (campos publicados) e `queries.py` (SQL).
-As rotas correspondentes são `/v1/bronze/{dataset}`, `/v1/silver/{dataset}`
-e `/v1/gold/{dataset}`. A API calcula e entrega os dados; a persistência em
-Delta e o histórico diário serão tratados diretamente no Databricks, que
-fará as chamadas HTTP para a API usando o token Bearer e a paginação.
-
-## Dados e processamento
-
-- Bronze: projeção das dez fontes PostgreSQL selecionadas.
-- Silver: calendário, posições e resumo de colaboradores calculados sob demanda.
-- Gold: fato de unidade calculado conforme a procedure publicada.
-
-As consultas usam parâmetros e transações READ ONLY. As quatro estruturas
-derivadas não usam suas tabelas físicas. O fato mantém a regra documentada de
-contar eventos apenas de gestores ativos da unidade 1.
-
-O fato virtual representa hoje; ID físico e timestamp de inserção são NULL.
-O Databricks preserva os snapshots diários. Posições de datas passadas usam
-o cadastro atual; transferências e desativações antigas não são reconstituídas.
-
-## Verificações
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe -m ruff check app tests
-.\.venv\Scripts\python.exe -m ruff format --check app tests
-.\.venv\Scripts\python.exe -m app.bronze.inspect_schema
-```
-
-Os testes de API usam FastAPI TestClient e fontes simuladas. O teste SQL opcional
-usa `TEST_DATABASE_URL`, cria um schema isolado e desfaz a transação. Use um
-banco de teste. Sem essa variável, o teste é pulado. O SQL gerado também foi
-validado em PostgreSQL em memória durante a migração de implementação.
-
-`app.bronze.inspect_schema` consulta o schema real em modo somente leitura e
-depende da conexão TLS. Para o Aiven, configure o CA em `DATABASE_SSL_CA`
-ou em um arquivo apontado por `DATABASE_SSL_CA_FILE`.
-
-## Container
-
-O `Dockerfile` executa a API Python na porta 8080. A implantação gratuita usa Python Workers com `worker.py` e `wrangler.jsonc`.
-O Hyperdrive conecta ao Aiven com validação TLS, sem usar Containers.
-Consulte [a configuração de publicação](docs/cloudflare.md).
-O consumo e a persistência dos dados serão implementados diretamente no Databricks.
-
-A inspeção do banco ativo depende do CA do Aiven. Os metadados gerados pela
-inspeção são salvos em `tmp/source-schema.json` e não entram no Git.
-
-## Documentação
-
-- [Schema e relacionamentos](docs/schema.md).
-- [Regras do fato histórico](docs/fato-historico.md).
-- [Contrato da API](docs/api-contract.md).
-- [Consumo no Databricks](docs/databricks.md).
-- [Implantação](docs/cloudflare.md).
+`python -m unittest discover -s tests -v`.
+`npm ci` e `npm run test:sql` validam também SQL, migração e SCD em PostgreSQL
+isolado sem tocar o banco de produção.

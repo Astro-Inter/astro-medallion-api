@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astro-medallion-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "API FastAPI para integração medallion PostgreSQL e Databricks"
 requires-python = ">=3.12"
 dependencies = [
@@ -30,3 +30,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I"]
+
+
+[tool.ruff.lint.per-file-ignores]
+"databricks/*.py" = ["F821"] # spark/dbutils are provided by Databricks notebooks.

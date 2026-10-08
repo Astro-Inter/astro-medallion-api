@@ -1,43 +1,39 @@
 from app.errors import ApiError
 from app.models import Dataset
 
-FACT = """nr_resumo AS (
-  SELECT id_unidade, COUNT(DISTINCT codigo_nr) AS qtd_nr,
+FACT = """unidades AS (
+  SELECT DISTINCT ON (id_unidade) id_unidade, NULLIF(LOWER(BTRIM(nome)), '') AS nome
+  FROM public.unidade ORDER BY id_unidade, NULLIF(LOWER(BTRIM(nome)), '') NULLS LAST
+), nr_resumo AS (
+  SELECT id_unidade, COUNT(DISTINCT NULLIF(LOWER(BTRIM(codigo_nr::text)), '')) AS qtd_nr,
     MIN(id_dim_nr_catalogo) AS id_dim_nr_catalogo
   FROM public.dim_nr_catalogo GROUP BY id_unidade
-), colaboradores_por_cargo AS (
-  SELECT u.unidade_id, un.nome AS unidade, u.cargo_id, c.nome AS cargo,
-    COUNT(DISTINCT u.id_usuario) AS qtd_colaborador
-  FROM public.usuario u
-  JOIN public.cargo c ON c.id_cargo = u.cargo_id
-  JOIN public.unidade un ON un.id_unidade = u.unidade_id
-  WHERE u.tipo = 'COLABORADOR' AND u.status = 'ATIVO'
-  GROUP BY u.unidade_id, un.nome, u.cargo_id, c.nome
-), dimensao_colaborador AS (
-  SELECT *, ROW_NUMBER() OVER (ORDER BY unidade_id, cargo) AS id_dim_resumo
-  FROM colaboradores_por_cargo
 ), colaboradores_resumo AS (
-  SELECT unidade_id, SUM(qtd_colaborador)::bigint AS qtd_colaborador,
-    MIN(id_dim_resumo) AS id_dim_resumo
-  FROM dimensao_colaborador GROUP BY unidade_id
+  SELECT u.unidade_id, COUNT(DISTINCT u.id_usuario) AS qtd_colaborador
+  FROM public.usuario u JOIN public.cargo c ON c.id_cargo = u.cargo_id
+  WHERE LOWER(BTRIM(u.tipo::text)) = 'colaborador'
+    AND LOWER(BTRIM(u.status::text)) = 'ativo'
+  GROUP BY u.unidade_id
 ), eventos_resumo AS (
   SELECT g.unidade_id, COUNT(DISTINCT e.id_evento) AS qtd_evento
   FROM public.evento e JOIN public.usuario g ON g.id_usuario = e.gestor_id
-  WHERE e.status <> 'CANCELADO' AND g.tipo = 'GESTOR'
-    AND g.status = 'ATIVO' AND g.unidade_id = 1
+  WHERE LOWER(BTRIM(e.status::text)) <> 'cancelado'
+    AND LOWER(BTRIM(g.tipo::text)) = 'gestor'
+    AND LOWER(BTRIM(g.status::text)) = 'ativo'
   GROUP BY g.unidade_id
 ), fato_virtual AS (
-  SELECT NULL::bigint AS id_fato_historico, un.id_unidade,
-    un.nome AS nome_unidade, nr.id_dim_nr_catalogo, f.id_dim_resumo,
+  SELECT nextval('astro_api.fact_id_seq') AS id_fato_historico, un.id_unidade,
+    NULLIF(LOWER(BTRIM(un.nome)), '') AS nome_unidade, nr.id_dim_nr_catalogo,
+    ('x' || SUBSTR(MD5(un.id_unidade::text || ':' || %(start)s::date::text), 1, 15))
+      ::bit(60)::bigint AS id_dim_resumo,
     COALESCE(nr.qtd_nr, 0)::bigint AS qtd_nr,
     COALESCE(f.qtd_colaborador, 0)::bigint AS qtd_colaborador,
     COALESCE(e.qtd_evento, 0)::bigint AS qtd_evento,
-    %(start)s::date AS dt_referencia, NULL::timestamp AS dt_criacao
-  FROM public.unidade un
+    %(start)s::date AS dt_referencia, %(captured_at)s::timestamptz AS dt_criacao
+  FROM unidades un
   LEFT JOIN nr_resumo nr ON nr.id_unidade = un.id_unidade
   LEFT JOIN colaboradores_resumo f ON f.unidade_id = un.id_unidade
   LEFT JOIN eventos_resumo e ON e.unidade_id = un.id_unidade
-  WHERE %(start)s::date = %(end)s::date
 )"""
 
 
