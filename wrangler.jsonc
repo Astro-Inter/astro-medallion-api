@@ -16,13 +16,17 @@
       "enabled": true,
       "head_sampling_rate": 1,
       "invocation_logs": false,
-      "destinations": ["astro-grafana-logs"],
+      "destinations": [
+        "astro-grafana-logs"
+      ],
       "persist": false
     },
     "traces": {
       "enabled": true,
       "head_sampling_rate": 1,
-      "destinations": ["astro-grafana-traces"],
+      "destinations": [
+        "astro-grafana-traces"
+      ],
       "persist": false
     }
   },
@@ -35,5 +39,18 @@
   "base_dir": ".wrangler/python-deploy",
   "build": {
     "command": "python prepare_worker.py"
+  },
+  "triggers": {
+    "crons": [
+      "0 3 * * *",
+      "0 4 * * *",
+      "0 5 * * *"
+    ]
+  },
+  "vars": {
+    "RATE_LIMIT_PER_MINUTE": "120",
+    "SNAPSHOT_TTL_SECONDS": "3600",
+    "MAX_SNAPSHOT_ROWS": "100000",
+    "RETRY_AFTER_SECONDS": "5"
   }
 }

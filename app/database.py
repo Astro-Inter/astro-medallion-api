@@ -47,17 +47,27 @@ def ssl_options(settings: Settings):
             path.unlink(missing_ok=True)
 
 
-def run_query(settings: Settings, sql: str, values: dict) -> list[dict]:
+def _run_query(settings: Settings, sql: str, values: dict, readonly: bool) -> list[dict]:
     try:
         with ssl_options(settings) as options:
             with psycopg.connect(**options, row_factory=dict_row, autocommit=True) as connection:
                 with connection.transaction():
-                    connection.execute("SET TRANSACTION READ ONLY")
+                    if readonly:
+                        connection.execute("SET TRANSACTION READ ONLY")
                     connection.execute("SET LOCAL TIME ZONE 'America/Sao_Paulo'")
                     connection.execute("SET LOCAL statement_timeout = '10s'")
                     cursor = connection.execute(sql, values)
-                    return cursor.fetchall()
+                    return cursor.fetchall() if cursor.description else []
     except ApiError:
         raise
     except (psycopg.Error, OSError, ValueError):
         raise ApiError(503, "source_unavailable", "A fonte PostgreSQL está indisponível.") from None
+
+
+def run_query(settings: Settings, sql: str, values: dict) -> list[dict]:
+    return _run_query(settings, sql, values, readonly=True)
+
+
+def run_snapshot_query(settings: Settings, sql: str, values: dict) -> list[dict]:
+    # Only internal, parameterized statements use this writer. HTTP exposes no SQL API.
+    return _run_query(settings, sql, values, readonly=False)

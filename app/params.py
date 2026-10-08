@@ -1,5 +1,6 @@
 import re
 from datetime import date, datetime
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from starlette.datastructures import QueryParams
@@ -26,7 +27,7 @@ def integer(value: str | None, default: int, minimum: int, maximum: int) -> int:
     if value is None:
         return default
     if (
-        len(value) > 12
+        len(value) > len(str(maximum))
         or not re.fullmatch(r"[0-9]+", value)
         or not minimum <= int(value) <= maximum
     ):
@@ -34,29 +35,52 @@ def integer(value: str | None, default: int, minimum: int, maximum: int) -> int:
     return int(value)
 
 
-def parse_options(params: QueryParams, dataset: Dataset, now: datetime) -> QueryOptions:
-    allowed = {"limit", "offset"} | ({"from", "to"} if dataset.dateFilter else set())
+def parse_options(
+    params: QueryParams, dataset: Dataset, now: datetime, available_from: date | None = None
+) -> QueryOptions:
+    allowed = {"limit", "offset", "from", "to", "snapshot"}
+    if dataset.layer == "gold":
+        allowed |= {"date", "id_unidade"}
     for key in params:
         if key not in allowed or len(params.getlist(key)) != 1:
             raise ApiError(400, "invalid_parameter", f"Parâmetro não suportado ou repetido: {key}.")
     today = now.astimezone(TIMEZONE).date()
-    start = parse_date(
-        params.get("from", str(today if dataset.layer == "gold" else today.replace(month=1, day=1)))
-    )
-    end = parse_date(params.get("to", str(today)))
+    default_start = today.replace(month=1, day=1) if dataset.layer == "silver" else today
+    if available_from is not None:
+        default_start = max(default_start, available_from)
+    if "date" in params:
+        if "from" in params or "to" in params:
+            raise ApiError(400, "invalid_parameter", "Não combine date com from/to.")
+        start = end = parse_date(params["date"])
+    else:
+        start = parse_date(params.get("from", str(default_start)))
+        end = parse_date(params.get("to", str(today)))
     if start > end or end > today:
         raise ApiError(400, "invalid_range", "O período deve ser ordenado e terminar até hoje.")
-    if dataset.dateFilter and (end - start).days >= 366:
+    if (end - start).days >= 366:
         raise ApiError(400, "range_too_large", "Solicite no máximo 366 dias por período.")
-    if dataset.layer == "gold" and (start != today or end != today):
+    if dataset.layer == "gold" and start != end:
+        raise ApiError(400, "invalid_range", "Gold aceita uma data por chamada; use date.")
+    if available_from is not None and start < available_from:
         raise ApiError(
             409,
             "historical_snapshot_unavailable",
-            "O fato virtual representa hoje; consulte o histórico no Databricks.",
+            f"Histórico disponível a partir de {available_from}.",
         )
+    snapshot = params.get("snapshot")
+    if snapshot is not None:
+        try:
+            snapshot = str(UUID(snapshot))
+        except ValueError:
+            raise ApiError(400, "invalid_snapshot", "Snapshot deve ser um UUID válido.") from None
+    offset = integer(params.get("offset"), 0, 0, 1000000)
+    if offset and snapshot is None:
+        raise ApiError(400, "snapshot_required", "Use pagination.next para continuar a extração.")
+    unit = (
+        integer(params.get("id_unidade"), 0, 1, 9223372036854775807)
+        if "id_unidade" in params
+        else None
+    )
     return QueryOptions(
-        start,
-        end,
-        integer(params.get("limit"), 500, 1, 1000),
-        integer(params.get("offset"), 0, 0, 1000000),
+        start, end, integer(params.get("limit"), 500, 1, 1000), offset, snapshot, unit
     )
