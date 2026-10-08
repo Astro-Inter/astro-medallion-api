@@ -1,10 +1,14 @@
 # Mapeamento das fontes (SCRUM-424)
 
 Referência: https://astro-inter.github.io/banco-de-dados/ (build de 03/10/2026).
-O schema publicado foi consultado em 06/10/2026. A validação contra o banco
-ativo depende do certificado CA do Aiven: a conexão recusou a cadeia TLS.
-`python -m app.bronze.inspect_schema` consulta metadados em transação READ ONLY e não executa
+O schema publicado foi consultado em 06/10/2026. A API publicada acessa o Aiven
+pelo Hyperdrive com validação TLS usando o certificado CA configurado.
+`python -m app.bronze.inspect_schema` consulta metadados das fontes do catálogo
+Bronze em transação READ ONLY e não executa
 procedures. Configure `DATABASE_SSL_CA` antes de usar o banco com CA privada.
+O inspetor consulta colunas e constraints somente dessas fontes; não consulta
+as estruturas virtuais nem a procedure antiga do fato histórico.
+A cópia da procedure em `reference/` documenta a regra de origem.
 
 | Fonte | Campos públicos solicitados | Chave / relações |
 | --- | --- | --- |

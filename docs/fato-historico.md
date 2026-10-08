@@ -4,6 +4,8 @@ A regra de referência anterior permanece arquivada em
 `reference/atualizar_fato_historico.sql`. A API 2.0 amplia a contagem de eventos
 para todas as unidades; status diferente de cancelado, gestor ativo.
 
+A conexão publicada ao Aiven usa Hyperdrive com validação TLS e certificado CA configurado.
+
 O grão é unidade/data. NRs são códigos distintos por unidade; colaboradores
 são usuários ativos do tipo colaborador, ligados a cargo. Unidades sem
 indicadores são mantidas com zero. Valores textuais seguem a normalização.
