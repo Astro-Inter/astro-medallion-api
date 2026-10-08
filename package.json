@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "cloudflare:prepare": "pywrangler sync",
-    "cloudflare:deploy": "node node_modules/wrangler/bin/wrangler.js deploy"
+    "cloudflare:deploy": "node node_modules/wrangler/bin/wrangler.js deploy",
+    "test:sql": "node tests/sql_contract.mjs"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "wrangler": "4.148.0"
   },
   "overrides": {

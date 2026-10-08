@@ -70,3 +70,16 @@ Swagger: https://astro-medallion-api.app-4str0.workers.dev/docs
 Publicada em 07/10/2026 no plano Free. Swagger e OpenAPI retornam HTTP 200;
 chamadas sem token retornam 401. Health, catálogo e chamadas das três camadas
 foram conferidos com o token, sem imprimir dados pessoais.
+
+
+## API 0.2: snapshots e SCD
+
+Aplique a migração PostgreSQL e as permissões antes do deploy.
+Desabilite query caching no recurso Hyperdrive usado por este Worker para que
+as leituras de controle e SCD reflitam imediatamente as escritas.
+O scheduled handler tem os argumentos self/controller/env/ctx e usa os crons
+03h/04h/05h UTC (00h/01h/02h America/Sao_Paulo) para captura diária e retries.
+RATE_LIMIT_PER_MINUTE, SNAPSHOT_TTL_SECONDS, MAX_SNAPSHOT_ROWS e RETRY_AFTER_SECONDS
+são variáveis não secretas. API_TOKEN continua secret, sem logging de valor.
+As fontes públicas são consultadas por leitura; os writes se limitam ao schema
+astro_api e à sua sequência. /health/db testa a conexão real.

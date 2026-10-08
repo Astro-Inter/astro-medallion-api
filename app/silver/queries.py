@@ -7,19 +7,29 @@ CALENDAR = """calendario_virtual AS (
     EXTRACT(MONTH FROM dia)::integer AS mes,
     EXTRACT(DAY FROM dia)::integer AS dia,
     EXTRACT(QUARTER FROM dia)::integer AS trimestre
-  FROM generate_series(%(start)s::date::timestamp, %(end)s::date::timestamp, interval '1 day') AS dia
+  FROM generate_series(%(start)s::date::timestamp, %(end)s::date::timestamp,
+    interval '1 day') AS dia
 )"""
 
 POSITIONS = (
     CALENDAR
     + """, posicao_virtual AS (
-  SELECT cal.data_evento, u.id_usuario AS id_colaborador,
-    c.nome AS cargo, u.unidade_id AS id_unidade
+  SELECT cal.data_evento, h.id_usuario AS id_colaborador,
+    h.cargo AS cargo, h.id_unidade
   FROM calendario_virtual cal
-  CROSS JOIN public.usuario u
-  JOIN public.cargo c ON c.id_cargo = u.cargo_id
-  WHERE u.status = 'ATIVO' AND u.tipo = 'COLABORADOR'
-    AND cal.data_evento >= u.criado_em::date
+  JOIN astro_api.usuario_history h ON
+    h.valid_from <= LEAST(
+      %(captured_at)s::timestamptz,
+      ((cal.data_evento + 1)::timestamp AT TIME ZONE 'America/Sao_Paulo')
+        - interval '1 microsecond'
+    )
+    AND (h.valid_to IS NULL OR h.valid_to > LEAST(
+      %(captured_at)s::timestamptz,
+      ((cal.data_evento + 1)::timestamp AT TIME ZONE 'America/Sao_Paulo')
+        - interval '1 microsecond'
+    ))
+  WHERE h.status = 'ativo' AND h.tipo = 'colaborador'
+    AND cal.data_evento >= h.criado_em::date
 )"""
 )
 
@@ -32,7 +42,10 @@ def virtual_sql(dataset: Dataset) -> str:
         return f"WITH {POSITIONS} SELECT {fields} FROM posicao_virtual"
     if dataset.name == "resumo_colaborador_dia":
         return (
-            f"WITH {POSITIONS} SELECT COUNT(DISTINCT id_colaborador) AS qtd_colaborador, "
-            "data_evento, id_unidade FROM posicao_virtual GROUP BY data_evento, id_unidade"
+            f"WITH {POSITIONS} SELECT COUNT(DISTINCT p.id_colaborador) AS qtd_colaborador, "
+            "cal.data_evento, un.id_unidade FROM calendario_virtual cal "
+            "CROSS JOIN public.unidade un LEFT JOIN posicao_virtual p "
+            "ON p.data_evento = cal.data_evento AND p.id_unidade = un.id_unidade "
+            "GROUP BY cal.data_evento, un.id_unidade"
         )
     raise ApiError(404, "dataset_not_found", "Dataset silver não encontrado.")
