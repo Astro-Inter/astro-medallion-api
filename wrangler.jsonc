@@ -40,13 +40,6 @@
   "build": {
     "command": "python prepare_worker.py"
   },
-  "triggers": {
-    "crons": [
-      "0 3 * * *",
-      "0 4 * * *",
-      "0 5 * * *"
-    ]
-  },
   "vars": {
     "RATE_LIMIT_PER_MINUTE": "120",
     "SNAPSHOT_TTL_SECONDS": "3600",
