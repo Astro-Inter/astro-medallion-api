@@ -4,17 +4,42 @@
   "account_id": "25eb8d3849be3adbff3678f4ec781804",
   "main": ".wrangler/python-deploy/worker.py",
   "compatibility_date": "2026-10-07",
-  "compatibility_flags": ["python_workers", "python_workers_314"],
+  "compatibility_flags": [
+    "python_workers",
+    "python_workers_314"
+  ],
   "workers_dev": true,
   "observability": {
     "enabled": true,
     "redact_query_string": true,
-    "logs": {"enabled": true, "head_sampling_rate": 1, "invocation_logs": false, "destinations": ["astro-grafana-logs"], "persist": false},
-    "traces": {"enabled": true, "head_sampling_rate": 1, "destinations": ["astro-grafana-traces"], "persist": false}
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+      "destinations": [
+        "astro-grafana-logs"
+      ],
+      "persist": false
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "destinations": [
+        "astro-grafana-traces"
+      ],
+      "persist": false
+    }
   },
-  "hyperdrive": [{"binding": "HYPERDRIVE", "id": "2004ed1dbe4a460495e663c42f3b801f"}],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "2004ed1dbe4a460495e663c42f3b801f"
+    }
+  ],
   "base_dir": ".wrangler/python-deploy",
-  "build": {"command": "python prepare_worker.py"},
+  "build": {
+    "command": "python prepare_worker.py"
+  },
   "vars": {
     "RATE_LIMIT_PER_MINUTE": "120",
     "SNAPSHOT_TTL_SECONDS": "3600",
