@@ -2,7 +2,7 @@ from app.models import physical
 
 DATASETS = (
     physical("unidade", "nome id_unidade", "id_unidade"),
-    physical("usuario", "id_usuario unidade_id tipo status nome", "id_usuario"),
+    physical("usuario", "id_usuario unidade_id cargo_id tipo status nome", "id_usuario"),
     physical("dim_nr_catalogo", "codigo_nr id_unidade", "id_unidade codigo_nr"),
     physical(
         "turma_funcionario", "usuario_id turma_id id_turma_funcionario", "id_turma_funcionario"

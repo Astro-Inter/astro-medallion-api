@@ -21,6 +21,12 @@ Dados, catálogo e saúde exigem `Authorization: Bearer <API_TOKEN>`.
 
 ## Bronze
 
+O dataset `usuario` publica `cargo_id`, relacionado a `cargo.id_cargo`, como
+identificador inteiro (string decimal no JSON, ou NULL quando ausente).
+Snapshots de `usuario` capturados antes dessa inclusão não recebem o campo
+retroativamente: o histórico preserva o payload original, e novas capturas
+diárias passam a incluí-lo.
+
 As dez fontes preservam seus nomes, acrescentando `snapshot_date` às
 projeções anteriores e expondo `id_conformidade` como chave pública de conformidade. Textos são convertidos para minúsculas e aparados com BTRIM;
 strings vazias viram NULL. Colunas declaradas como date são convertidas para

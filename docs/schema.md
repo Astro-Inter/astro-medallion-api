@@ -13,7 +13,7 @@ A cópia da procedure em `reference/` documenta a regra de origem.
 | Fonte | Campos públicos solicitados | Chave / relações |
 | --- | --- | --- |
 | unidade | nome, id_unidade | id_unidade |
-| usuario | id_usuario, unidade_id, tipo, status, nome | unidade_id → unidade; cargo_id → cargo |
+| usuario | id_usuario, unidade_id, cargo_id, tipo, status, nome | unidade_id → unidade; cargo_id → cargo |
 | dim_nr_catalogo | codigo_nr, id_unidade | view; par id_unidade/codigo_nr |
 | turma_funcionario | usuario_id, turma_id | usuario_id → usuario; turma_id → turma |
 | turma | id_turma, data_inicial | evento_id → evento |
@@ -25,9 +25,10 @@ A cópia da procedure em `reference/` documenta a regra de origem.
 
 `usuario.nome` é herdado de `conta`. Os nomes físicos são `usuario`,
 `turma_funcionario`, `data_inicial`, `data_conclusao` e `modo_conclusao`.
-As consultas internas de geração também precisam de `usuario.cargo_id`,
-`usuario.criado_em` e `dim_nr_catalogo.id_dim_nr_catalogo`.
-Esses campos não ampliam a projeção pública de `usuario`.
+`usuario.cargo_id` também é publicado no dataset Bronze e relaciona o usuário
+com `cargo.id_cargo`. As consultas internas de geração precisam ainda de
+`usuario.criado_em` e `dim_nr_catalogo.id_dim_nr_catalogo`; esses dois campos
+não ampliam a projeção pública de `usuario`.
 
 Calendário e agregações continuam sendo derivados por SQL; posição/resumo
 leem a SCD em astro_api.usuario_history e Gold é retida em astro_api.snapshots.
