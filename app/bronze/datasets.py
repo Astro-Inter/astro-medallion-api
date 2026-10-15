@@ -15,6 +15,12 @@ DATASETS = (
     ),
     physical("conformidade", "id_conformidade nr_id conclusao_evento_id", "id_conformidade"),
     physical("evento", "status id_evento gestor_id nr_id modo_conclusao", "id_evento"),
+    physical(
+        "eventos_astro",
+        "id_evento firebase_uid tipo_evento nome_botao nome_tela contexto_tela "
+        "nome_dialog dialog_clicado showcase_click nome_showcase criado_em",
+        "id_evento",
+    ),
     physical("cargo_nr", "nr_id cargo_id", "cargo_id nr_id"),
     physical("cargo", "id_cargo nome", "id_cargo"),
 )

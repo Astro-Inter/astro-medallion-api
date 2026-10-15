@@ -22,7 +22,7 @@ banco/Worker. Este repositório não aplica migrações durante requests.
    01h e 02h (03h, 04h e 05h UTC). Cada snapshot diário é publicado uma única
    vez. A primeira chamada de hoje também pode criar a captura daquele dataset.
 6. Atualizar clientes para seguir pagination.next inteira. O consumidor em
-   `databricks/ingest_api.py` foi ajustado e mantém as 13 cargas diárias e a fato
+   `databricks/ingest_api.py` foi ajustado e mantém as 14 cargas diárias e a fato
    semanal no schema silver com nomes sem prefixo.
 
 ## Histórico e falhas

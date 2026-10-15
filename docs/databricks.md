@@ -7,7 +7,7 @@ mesmo notebook: um com o parâmetro `load_mode=daily` e outro com
 
 Todos os datasets são gravados no catálogo/schema configurado no arquivo
 (`workspace.silver` por padrão), usando o nome original publicado pela API, sem
-prefixo de camada. A carga diária inclui os dez datasets Bronze e os três
+prefixo de camada. A carga diária inclui os onze datasets Bronze e os três
 Silver; a semanal inclui somente `fato_historico_geral_unidade`. A origem da
 API continua respeitando as rotas e camadas Bronze, Silver e Gold.
 

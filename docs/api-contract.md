@@ -14,7 +14,7 @@ Dados, catálogo e saúde exigem `Authorization: Bearer <API_TOKEN>`.
 
 - `GET /health`: disponibilidade do processo, sem consultar o banco.
 - `GET /health/db`: executa `SELECT 1`; 503 se a fonte estiver indisponível.
-- `GET /v1/datasets`: 14 datasets e seus tipos/regras de histórico.
+- `GET /v1/datasets`: 15 datasets e seus tipos/regras de histórico.
 - `GET /v1/bronze/{nome}`: snapshot diário normalizado da fonte.
 - `GET /v1/silver/{nome}`: calendário ou posição/resumo com SCD Tipo 2.
 - `GET /v1/gold/fato_historico_geral_unidade`: snapshot diário persistido.
@@ -27,17 +27,28 @@ Snapshots de `usuario` capturados antes dessa inclusão não recebem o campo
 retroativamente: o histórico preserva o payload original, e novas capturas
 diárias passam a incluí-lo.
 
-As dez fontes preservam seus nomes, acrescentando `snapshot_date` às
-projeções anteriores e expondo `id_conformidade` como chave pública de conformidade. Textos são convertidos para minúsculas e aparados com BTRIM;
-strings vazias viram NULL. Colunas declaradas como date são convertidas para
-DATE no PostgreSQL. Cada fonte é deduplicada pela chave do catálogo.
+O endpoint `GET /v1/bronze/eventos_astro` publica todas as 11 colunas da tabela:
+`id_evento`, `firebase_uid`, `tipo_evento`, `nome_botao`, `nome_tela`,
+`contexto_tela`, `nome_dialog`, `dialog_clicado`, `showcase_click`,
+`nome_showcase` e `criado_em`, além de `snapshot_date`. A chave é `id_evento`;
+`criado_em` tem tipo lógico `timestamp`. `firebase_uid` é preservado sem
+normalização por ser um identificador sensível a maiúsculas/minúsculas.
+Essa fonte é distinta de `evento` e começa a ter snapshots na primeira captura
+após a publicação desta alteração, sem reconstruir dias anteriores.
+
+As onze fontes preservam seus nomes, acrescentando `snapshot_date` às
+projeções anteriores e expondo `id_conformidade` como chave pública de conformidade.
+Textos são convertidos para minúsculas e aparados com BTRIM; strings vazias viram
+NULL. A exceção é `eventos_astro.firebase_uid`, preservado integralmente.
+Colunas declaradas como date são convertidas para DATE no PostgreSQL.
+Cada fonte é deduplicada pela chave do catálogo.
 Quando uma chave tem versões divergentes, a linha com os menores valores
 normalizados das outras colunas (NULLS LAST) é escolhida de forma determinística;
 isso não representa seleção de uma versão mais recente. Chave obrigatória nula
 impede a publicação de todo o snapshot e retorna 503 `invalid_source_data`.
 
 `from` e `to` filtram **datas de captura**, não datas de criação/modificação do
-registro. Assim todas as dez fontes suportam períodos, inclusive fontes sem
+registro. Assim todas as onze fontes suportam períodos, inclusive fontes sem
 timestamp de negócio. A saída inclui uma versão por registro/dia e
 `snapshot_date` distingue essas versões. O padrão é hoje. Dias sem captura
 retornam 409; passado nunca é reconstruído a partir do cadastro atual.
