@@ -7,7 +7,10 @@ def source_sql(dataset: Dataset) -> str:
     hidden = [column for column in dataset.key if column not in source_columns]
     projections = []
     for column in [*source_columns, *hidden]:
-        if dataset.column_types.get(column) == "string":
+        if dataset.name == "eventos_astro" and column == "firebase_uid":
+            # Firebase UIDs are case-sensitive identifiers, not display text.
+            projections.append(column)
+        elif dataset.column_types.get(column) == "string":
             projections.append(f"NULLIF(LOWER(BTRIM({column}::text)), '') AS {column}")
         elif dataset.column_types.get(column) == "date":
             projections.append(f"{column}::date AS {column}")

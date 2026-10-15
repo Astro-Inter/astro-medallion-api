@@ -48,7 +48,7 @@ def get_page(url, params=None):
 
 all_datasets = get_page(f"{BASE_URL}/v1/datasets")["datasets"]
 
-# Daily: ten API Bronze datasets and three API Silver datasets.
+# Daily: eleven API Bronze datasets and three API Silver datasets.
 # Weekly: the API's current Gold fact snapshot.
 if load_mode == "daily":
     selected_datasets = [

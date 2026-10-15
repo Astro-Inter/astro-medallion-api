@@ -34,7 +34,7 @@ def types_for(columns):
     for column in columns:
         if column in dates:
             result[column] = "date"
-        elif column == "dt_criacao":
+        elif column in {"dt_criacao", "criado_em"}:
             result[column] = "timestamp"
         elif column.startswith(("id_", "qtd_")) or column.endswith("_id") or column in integers:
             result[column] = "integer"

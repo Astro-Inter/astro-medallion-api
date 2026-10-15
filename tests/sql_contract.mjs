@@ -38,6 +38,10 @@ try {
       id_conclusao_evento bigint, data_conclusao date, data_validacao date);
     CREATE TABLE public.conformidade(id_conformidade bigint, nr_id bigint, conclusao_evento_id bigint);
     CREATE TABLE public.evento(id_evento bigint, gestor_id bigint, status text, nr_id bigint, modo_conclusao text);
+    CREATE TABLE public.eventos_astro(id_evento bigint PRIMARY KEY, firebase_uid varchar,
+      tipo_evento varchar, nome_botao varchar, nome_tela varchar, contexto_tela text,
+      nome_dialog varchar, dialog_clicado varchar, showcase_click varchar,
+      nome_showcase varchar, criado_em timestamp);
     CREATE TABLE public.cargo_nr(nr_id bigint, cargo_id bigint);
     INSERT INTO public.unidade VALUES (1,' A '),(1,' A '),(2,' B '),(3,'  ');
     INSERT INTO public.cargo VALUES (1,' Analista '),(2,'Operador');
@@ -55,6 +59,10 @@ try {
     INSERT INTO public.evento VALUES (1,3,'ATIVO',1,' Manual '),(2,3,'CANCELADO',1,'Manual'),
       (3,4,'ATIVO',1,'Manual');
     INSERT INTO public.cargo_nr VALUES (1,1),(1,1);
+    INSERT INTO public.eventos_astro VALUES
+      (1,'AbC123',' CLICK ',' Abrir ',' HOME ',' Contexto ',' Modal ',' SIM ',
+       ' NAO ',' Tutorial ','2026-10-08 09:30:00'),
+      (2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
   `);
   const migration = await readFile("migrations/001_history_and_snapshots.sql", "utf8");
   await db.exec(migration);
@@ -63,7 +71,7 @@ try {
   check((await db.query("SELECT COUNT(*)::integer n FROM astro_api.usuario_history")).rows[0].n, 5);
   await db.exec("UPDATE astro_api.usuario_history SET valid_from='2024-01-01T00:00:00Z'");
 
-  // All 14 generated queries compile and execute with the declared projections.
+  // All generated queries compile and execute with the declared projections.
   for (const [name, statement] of Object.entries(statements.source)) {
     const rows = await run(statement);
     assert.ok(Array.isArray(rows), name); checks++;
@@ -74,6 +82,23 @@ try {
   check((await run(statements.source.turma_funcionario)).length, 1);
   check((await run(statements.source.conformidade)).length, 2);
   check((await run(statements.source.cargo_nr)).length, 1);
+  const events = await run(statements.source.eventos_astro);
+  check(events.length, 2);
+  check(Object.keys(events[0]).sort(), [
+    "id_evento", "firebase_uid", "tipo_evento", "nome_botao", "nome_tela",
+    "contexto_tela", "nome_dialog", "dialog_clicado", "showcase_click",
+    "nome_showcase", "criado_em", "snapshot_date",
+  ].sort());
+  check(events[0].firebase_uid, "AbC123");
+  check(events[0].tipo_evento, "click");
+  const eventTimes = await run({
+    ...statements.source.eventos_astro,
+    sql: "SELECT to_char(criado_em, 'YYYY-MM-DD HH24:MI:SS') AS original_time FROM (" +
+      statements.source.eventos_astro.sql + ") events ORDER BY id_evento",
+  });
+  check(eventTimes[0].original_time, "2026-10-08 09:30:00");
+  check(events[1].firebase_uid, null);
+  check(events[1].criado_em, null);
 
   // Gold groups the source by unit; remove duplicate source units for this fixture.
   await db.exec("DELETE FROM public.unidade WHERE ctid NOT IN (SELECT MIN(ctid) FROM public.unidade GROUP BY id_unidade)");

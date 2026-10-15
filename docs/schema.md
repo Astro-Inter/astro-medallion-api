@@ -20,6 +20,7 @@ A cópia da procedure em `reference/` documenta a regra de origem.
 | conclusao_evento | status, turma_funcionario_id, id_conclusao_evento, data_conclusao, data_validacao | turma_funcionario_id → turma_funcionario |
 | conformidade | id_conformidade, nr_id, conclusao_evento_id | nr_id → nr_catalogo; conclusao_evento_id → conclusao_evento |
 | evento | status, id_evento, gestor_id, nr_id, modo_conclusao | gestor_id → usuario |
+| eventos_astro | id_evento, firebase_uid, tipo_evento, nome_botao, nome_tela, contexto_tela, nome_dialog, dialog_clicado, showcase_click, nome_showcase, criado_em | id_evento; eventos de uso da aplicação |
 | cargo_nr | nr_id, cargo_id | chave composta cargo_id/nr_id |
 | cargo | id_cargo, nome | id_cargo |
 
@@ -45,6 +46,12 @@ renomeados no PostgreSQL.
 Para relacionar conclusões, a extração de `turma_funcionario` também expõe
 `id_turma_funcionario`, e `turma` expõe `evento_id`: são chaves de ligação
 necessárias para a integração e estão documentadas no contrato.
+
+`eventos_astro` é uma fonte distinta de `evento`. Suas 11 colunas foram
+conferidas na documentação publicada e nos metadados do Aiven em 15/10/2026.
+`firebase_uid` preserva maiúsculas, minúsculas e o conteúdo original para manter
+a identidade do Firebase. `criado_em` é publicado como timestamp ISO 8601,
+sem acrescentar fuso ao valor original (TIMESTAMP WITHOUT TIME ZONE).
 
 
 ## Contrato 2.0
