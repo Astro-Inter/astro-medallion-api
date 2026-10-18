@@ -38,7 +38,7 @@ try {
       id_conclusao_evento bigint, data_conclusao date, data_validacao date);
     CREATE TABLE public.conformidade(id_conformidade bigint, nr_id bigint, conclusao_evento_id bigint);
     CREATE TABLE public.evento(id_evento bigint, gestor_id bigint, status text, nr_id bigint, modo_conclusao text);
-    CREATE TABLE public.eventos_astro(id_evento bigint PRIMARY KEY, firebase_uid varchar,
+    CREATE TABLE public.eventos_astro(id_evento bigint PRIMARY KEY, firebase_uid varchar, cliente_ip inet,
       tipo_evento varchar, nome_botao varchar, nome_tela varchar, contexto_tela text,
       nome_dialog varchar, dialog_clicado varchar, showcase_click varchar,
       nome_showcase varchar, criado_em timestamp);
@@ -60,9 +60,9 @@ try {
       (3,4,'ATIVO',1,'Manual');
     INSERT INTO public.cargo_nr VALUES (1,1),(1,1);
     INSERT INTO public.eventos_astro VALUES
-      (1,'AbC123',' CLICK ',' Abrir ',' HOME ',' Contexto ',' Modal ',' SIM ',
+      (1,'AbC123','192.0.2.10',' CLICK ',' Abrir ',' HOME ',' Contexto ',' Modal ',' SIM ',
        ' NAO ',' Tutorial ','2026-10-08 09:30:00'),
-      (2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      (2,NULL,'2001:db8::1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
   `);
   const migration = await readFile("migrations/001_history_and_snapshots.sql", "utf8");
   await db.exec(migration);
@@ -85,7 +85,7 @@ try {
   const events = await run(statements.source.eventos_astro);
   check(events.length, 2);
   check(Object.keys(events[0]).sort(), [
-    "id_evento", "firebase_uid", "tipo_evento", "nome_botao", "nome_tela",
+    "id_evento", "firebase_uid", "cliente_ip", "tipo_evento", "nome_botao", "nome_tela",
     "contexto_tela", "nome_dialog", "dialog_clicado", "showcase_click",
     "nome_showcase", "criado_em", "snapshot_date",
   ].sort());

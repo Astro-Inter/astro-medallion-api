@@ -27,14 +27,23 @@ Snapshots de `usuario` capturados antes dessa inclusão não recebem o campo
 retroativamente: o histórico preserva o payload original, e novas capturas
 diárias passam a incluí-lo.
 
-O endpoint `GET /v1/bronze/eventos_astro` publica todas as 11 colunas da tabela:
-`id_evento`, `firebase_uid`, `tipo_evento`, `nome_botao`, `nome_tela`,
+O endpoint `GET /v1/bronze/eventos_astro` publica todas as 12 colunas da tabela:
+`id_evento`, `firebase_uid`, `cliente_ip`, `tipo_evento`, `nome_botao`, `nome_tela`,
 `contexto_tela`, `nome_dialog`, `dialog_clicado`, `showcase_click`,
 `nome_showcase` e `criado_em`, além de `snapshot_date`. A chave é `id_evento`;
 `criado_em` tem tipo lógico `timestamp`. `firebase_uid` é preservado sem
 normalização por ser um identificador sensível a maiúsculas/minúsculas.
 Essa fonte é distinta de `evento` e começa a ter snapshots na primeira captura
 após a publicação desta alteração, sem reconstruir dias anteriores.
+
+`cliente_ip` tem tipo lógico `string` no catálogo e é extraído de `INET` como
+texto, aceitando IPv4 e IPv6; quando não informado, retorna NULL no JSON.
+O Databricks pode consumi-lo como STRING pelo catálogo existente.
+A coluna precisa existir na origem antes da publicação da API: a PR de banco
+[39](https://github.com/Astro-Inter/banco-de-dados/pull/39) atualiza o CREATE TABLE
+de bancos novos, sem migrar bancos existentes.
+Snapshots já capturados preservam o payload original e não recebem o IP
+retroativamente; as próximas capturas diárias incluem `cliente_ip`.
 
 As onze fontes preservam seus nomes, acrescentando `snapshot_date` às
 projeções anteriores e expondo `id_conformidade` como chave pública de conformidade.
