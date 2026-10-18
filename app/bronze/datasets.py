@@ -17,7 +17,7 @@ DATASETS = (
     physical("evento", "status id_evento gestor_id nr_id modo_conclusao", "id_evento"),
     physical(
         "eventos_astro",
-        "id_evento firebase_uid tipo_evento nome_botao nome_tela contexto_tela "
+        "id_evento firebase_uid cliente_ip tipo_evento nome_botao nome_tela contexto_tela "
         "nome_dialog dialog_clicado showcase_click nome_showcase criado_em",
         "id_evento",
     ),
