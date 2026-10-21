@@ -17,7 +17,7 @@ A cópia da procedure em `reference/` documenta a regra de origem.
 | dim_nr_catalogo | codigo_nr, id_unidade | view; par id_unidade/codigo_nr |
 | turma_funcionario | usuario_id, turma_id | usuario_id → usuario; turma_id → turma |
 | turma | id_turma, data_inicial | evento_id → evento |
-| conclusao_evento | status, turma_funcionario_id, id_conclusao_evento, data_conclusao, data_validacao | turma_funcionario_id → turma_funcionario |
+| conclusao_evento | status, turma_funcionario_id, turma_colaborador_id, id_conclusao_evento, data_conclusao, data_validacao | turma_funcionario_id → turma_funcionario |
 | conformidade | id_conformidade, nr_id, conclusao_evento_id | nr_id → nr_catalogo; conclusao_evento_id → conclusao_evento |
 | evento | status, id_evento, gestor_id, nr_id, modo_conclusao | gestor_id → usuario |
 | eventos_astro | id_evento, firebase_uid, cliente_ip, tipo_evento, nome_botao, nome_tela, contexto_tela, nome_dialog, dialog_clicado, showcase_click, nome_showcase, criado_em | id_evento; eventos de uso da aplicação |
@@ -46,6 +46,15 @@ renomeados no PostgreSQL.
 Para relacionar conclusões, a extração de `turma_funcionario` também expõe
 `id_turma_funcionario`, e `turma` expõe `evento_id`: são chaves de ligação
 necessárias para a integração e estão documentadas no contrato.
+
+`conclusao_evento.turma_colaborador_id` é um campo opcional, previsto como
+identificador inteiro compatível com BIGINT. A projeção consulta o registro
+como JSON para retornar NULL enquanto a coluna não existir na origem; quando
+ela for criada e preenchida, as novas capturas passam a usar seu valor real.
+`turma_funcionario_id` permanece publicado separadamente e não substitui esse
+valor. Snapshots antigos recebem o campo como NULL somente na resposta, sem
+alterar o histórico armazenado. Uma captura já realizada no dia é reutilizada;
+valores adicionados depois dela aparecem na próxima captura diária.
 
 `eventos_astro` é uma fonte distinta de `evento`. As 11 colunas originais foram
 conferidas na documentação publicada e nos metadados do Aiven em 15/10/2026.

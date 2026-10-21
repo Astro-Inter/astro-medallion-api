@@ -227,6 +227,9 @@ def create_app(
             **{"from": str(options.start), "to": str(options.end)},
         )
         next_url = request.url.replace_query_params(**params)
+        if dataset.name == "conclusao_evento":
+            # Expose the new field in old snapshots without rewriting stored history.
+            rows = [{"turma_colaborador_id": None, **row} for row in rows]
         json_rows = [
             {
                 key: value
