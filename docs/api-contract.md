@@ -27,6 +27,18 @@ Snapshots de `usuario` capturados antes dessa inclusão não recebem o campo
 retroativamente: o histórico preserva o payload original, e novas capturas
 diárias passam a incluí-lo.
 
+`GET /v1/bronze/conclusao_evento` também publica `turma_colaborador_id`, com
+tipo lógico `integer` no catálogo (string decimal no JSON, ou NULL). A coluna
+é opcional e deve ser compatível com BIGINT na origem. Enquanto ela não existir
+no PostgreSQL, a API retorna NULL sem exigir uma migração prévia. Depois da
+criação e do preenchimento da coluna no banco, novas capturas passam a incluir
+seu valor, sem outra alteração de código. `turma_funcionario_id` é preservado
+e não é usado como substituto.
+Snapshots anteriores à inclusão expõem `turma_colaborador_id: null` na resposta,
+sem reescrever o histórico nem reconstruir relações antigas. Se a captura do
+dia já existir quando o banco for atualizado, os novos valores aparecem na
+próxima captura diária.
+
 O endpoint `GET /v1/bronze/eventos_astro` publica todas as 12 colunas da tabela:
 `id_evento`, `firebase_uid`, `cliente_ip`, `tipo_evento`, `nome_botao`, `nome_tela`,
 `contexto_tela`, `nome_dialog`, `dialog_clicado`, `showcase_click`,

@@ -7,7 +7,13 @@ def source_sql(dataset: Dataset) -> str:
     hidden = [column for column in dataset.key if column not in source_columns]
     projections = []
     for column in [*source_columns, *hidden]:
-        if dataset.name == "eventos_astro" and column == "firebase_uid":
+        if dataset.name == "conclusao_evento" and column == "turma_colaborador_id":
+            # The database rollout may lag the API; missing JSON keys yield SQL NULL.
+            projections.append(
+                "NULLIF(to_jsonb(conclusao_evento)->>'turma_colaborador_id', '')::bigint "
+                "AS turma_colaborador_id"
+            )
+        elif dataset.name == "eventos_astro" and column == "firebase_uid":
             # Firebase UIDs are case-sensitive identifiers, not display text.
             projections.append(column)
         elif dataset.column_types.get(column) == "string":

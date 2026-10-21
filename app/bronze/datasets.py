@@ -10,7 +10,8 @@ DATASETS = (
     physical("turma", "id_turma data_inicial evento_id", "id_turma"),
     physical(
         "conclusao_evento",
-        "status turma_funcionario_id id_conclusao_evento data_conclusao data_validacao",
+        "status turma_funcionario_id turma_colaborador_id "
+        "id_conclusao_evento data_conclusao data_validacao",
         "id_conclusao_evento",
     ),
     physical("conformidade", "id_conformidade nr_id conclusao_evento_id", "id_conformidade"),
