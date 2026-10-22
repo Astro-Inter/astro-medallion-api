@@ -27,19 +27,22 @@ Snapshots de `usuario` capturados antes dessa inclusão não recebem o campo
 retroativamente: o histórico preserva o payload original, e novas capturas
 diárias passam a incluí-lo.
 
-`GET /v1/bronze/conclusao_evento` também publica `turma_colaborador_id`, com
-tipo lógico `integer` no catálogo (string decimal no JSON, ou NULL). A coluna
-é opcional e deve ser compatível com BIGINT na origem. Enquanto ela não existir
-no PostgreSQL, a API retorna NULL sem exigir uma migração prévia. Depois da
-criação e do preenchimento da coluna no banco, novas capturas passam a incluir
-seu valor, sem outra alteração de código. `turma_funcionario_id` é preservado
-e não é usado como substituto.
-Snapshots anteriores à inclusão expõem `turma_colaborador_id: null` na resposta,
-sem reescrever o histórico nem reconstruir relações antigas. Se a captura do
-dia já existir quando o banco for atualizado, os novos valores aparecem na
-próxima captura diária.
+`GET /v1/bronze/conclusao_evento` publica `turma_colaborador_id`, com tipo
+lógico `integer` (string decimal no JSON). A coluna é obrigatória na origem e
+referencia `turma_colaborador.id_turma_colaborador`.
 
-O endpoint `GET /v1/bronze/eventos_astro` publica todas as 12 colunas da tabela:
+As fontes e endpoints Bronze acompanham os nomes atuais do PostgreSQL:
+`turma_colaborador` e `evento_astro`. A chave antiga de funcionário deixa de
+ser publicada. Atualize os consumidores e execute a carga do Databricks antes
+de publicar consultas de dashboard com esses nomes.
+
+Snapshots retidos sob os nomes antigos não são renomeados nem apagados.
+As fontes renomeadas iniciam sua própria série na primeira captura; períodos
+anteriores sem captura continuam retornando 409. Snapshots antigos de
+`conclusao_evento` preservam o payload original; relações ausentes não são
+reconstruídas retroativamente.
+
+O endpoint `GET /v1/bronze/evento_astro` publica todas as 12 colunas da tabela:
 `id_evento`, `firebase_uid`, `cliente_ip`, `tipo_evento`, `nome_botao`, `nome_tela`,
 `contexto_tela`, `nome_dialog`, `dialog_clicado`, `showcase_click`,
 `nome_showcase` e `criado_em`, além de `snapshot_date`. A chave é `id_evento`;
@@ -57,10 +60,10 @@ de bancos novos, sem migrar bancos existentes.
 Snapshots já capturados preservam o payload original e não recebem o IP
 retroativamente; as próximas capturas diárias incluem `cliente_ip`.
 
-As onze fontes preservam seus nomes, acrescentando `snapshot_date` às
+As onze fontes usam os nomes atuais do PostgreSQL, acrescentando `snapshot_date` às
 projeções anteriores e expondo `id_conformidade` como chave pública de conformidade.
 Textos são convertidos para minúsculas e aparados com BTRIM; strings vazias viram
-NULL. A exceção é `eventos_astro.firebase_uid`, preservado integralmente.
+NULL. A exceção é `evento_astro.firebase_uid`, preservado integralmente.
 Colunas declaradas como date são convertidas para DATE no PostgreSQL.
 Cada fonte é deduplicada pela chave do catálogo.
 Quando uma chave tem versões divergentes, a linha com os menores valores
