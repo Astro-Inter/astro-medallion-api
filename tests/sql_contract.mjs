@@ -32,13 +32,13 @@ try {
     CREATE TABLE public.usuario(id_usuario bigint PRIMARY KEY, nome text, tipo text,
       status text, unidade_id bigint, cargo_id bigint, criado_em timestamp);
     CREATE TABLE public.dim_nr_catalogo(id_dim_nr_catalogo bigint, codigo_nr text, id_unidade bigint);
-    CREATE TABLE public.turma_funcionario(usuario_id bigint, turma_id bigint, id_turma_funcionario bigint);
+    CREATE TABLE public.turma_colaborador(usuario_id bigint, turma_id bigint, id_turma_colaborador bigint);
     CREATE TABLE public.turma(id_turma bigint, data_inicial date, evento_id bigint);
-    CREATE TABLE public.conclusao_evento(status text, turma_funcionario_id bigint,
+    CREATE TABLE public.conclusao_evento(status text, turma_colaborador_id bigint,
       id_conclusao_evento bigint, data_conclusao date, data_validacao date);
     CREATE TABLE public.conformidade(id_conformidade bigint, nr_id bigint, conclusao_evento_id bigint);
     CREATE TABLE public.evento(id_evento bigint, gestor_id bigint, status text, nr_id bigint, modo_conclusao text);
-    CREATE TABLE public.eventos_astro(id_evento bigint PRIMARY KEY, firebase_uid varchar, cliente_ip inet,
+    CREATE TABLE public.evento_astro(id_evento bigint PRIMARY KEY, firebase_uid varchar, cliente_ip inet,
       tipo_evento varchar, nome_botao varchar, nome_tela varchar, contexto_tela text,
       nome_dialog varchar, dialog_clicado varchar, showcase_click varchar,
       nome_showcase varchar, criado_em timestamp);
@@ -52,14 +52,14 @@ try {
       (4,'GB','GESTOR','ATIVO',2,1,'2024-01-01'),
       (5,'Inativo','COLABORADOR','DESATIVADO',1,1,'2024-01-01');
     INSERT INTO public.dim_nr_catalogo VALUES (1,' NR-10 ',1),(2,' NR-10 ',1),(3,'NR-35',1),(4,'NR-6',2);
-    INSERT INTO public.turma_funcionario VALUES (1,1,1),(1,1,1);
+    INSERT INTO public.turma_colaborador VALUES (1,1,1),(1,1,1);
     INSERT INTO public.turma VALUES (1,'2026-10-08',1);
     INSERT INTO public.conclusao_evento VALUES (' CONCLUIDO ',1,1,'2026-10-08',NULL);
     INSERT INTO public.conformidade VALUES (1,1,1),(1,1,1),(2,1,1);
     INSERT INTO public.evento VALUES (1,3,'ATIVO',1,' Manual '),(2,3,'CANCELADO',1,'Manual'),
       (3,4,'ATIVO',1,'Manual');
     INSERT INTO public.cargo_nr VALUES (1,1),(1,1);
-    INSERT INTO public.eventos_astro VALUES
+    INSERT INTO public.evento_astro VALUES
       (1,'AbC123','192.0.2.10',' CLICK ',' Abrir ',' HOME ',' Contexto ',' Modal ',' SIM ',
        ' NAO ',' Tutorial ','2026-10-08 09:30:00'),
       (2,NULL,'2001:db8::1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
@@ -79,10 +79,10 @@ try {
   const clean = await run(statements.source.unidade);
   check(clean.length, 3);
   check(clean.map(r => r.nome), ["a", "b", null]);
-  check((await run(statements.source.turma_funcionario)).length, 1);
+  check((await run(statements.source.turma_colaborador)).length, 1);
   check((await run(statements.source.conformidade)).length, 2);
   check((await run(statements.source.cargo_nr)).length, 1);
-  const events = await run(statements.source.eventos_astro);
+  const events = await run(statements.source.evento_astro);
   check(events.length, 2);
   check(Object.keys(events[0]).sort(), [
     "id_evento", "firebase_uid", "cliente_ip", "tipo_evento", "nome_botao", "nome_tela",
@@ -92,9 +92,9 @@ try {
   check(events[0].firebase_uid, "AbC123");
   check(events[0].tipo_evento, "click");
   const eventTimes = await run({
-    ...statements.source.eventos_astro,
+    ...statements.source.evento_astro,
     sql: "SELECT to_char(criado_em, 'YYYY-MM-DD HH24:MI:SS') AS original_time FROM (" +
-      statements.source.eventos_astro.sql + ") events ORDER BY id_evento",
+      statements.source.evento_astro.sql + ") events ORDER BY id_evento",
   });
   check(eventTimes[0].original_time, "2026-10-08 09:30:00");
   check(events[1].firebase_uid, null);
