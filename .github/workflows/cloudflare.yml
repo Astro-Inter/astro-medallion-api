@@ -24,7 +24,7 @@ jobs:
       - run: uv run --no-sync ruff check app worker.py tests databricks
       - run: uv run --no-sync python -m unittest discover -s tests -v
       - run: npm ci --ignore-scripts
-      - run: npm run test:sql
+      - run: uv run --no-sync npm run test:sql
       - run: uv run --locked pywrangler deploy --dry-run
   deploy:
     needs: validate
