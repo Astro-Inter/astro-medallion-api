@@ -53,3 +53,7 @@ Detalhes: [contrato da API](docs/api-contract.md),
 `python -m unittest discover -s tests -v`.
 `npm ci` e `npm run test:sql` validam também SQL, migração e SCD em PostgreSQL
 isolado sem tocar o banco de produção.
+
+## Diagnóstico operacional
+
+Consulte [os campos e limites dos novos diagnósticos](docs/observability-diagnostics.md) para investigar falhas por requisição ou execução no Grafana.
