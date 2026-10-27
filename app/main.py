@@ -1,4 +1,3 @@
-from app.diagnostics import HttpObservability, request_context, diagnostic, emit
 import hashlib
 import hmac
 import inspect
@@ -17,6 +16,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.catalog import DATASETS, find_dataset
 from app.config import Settings
+from app.diagnostics import HttpObservability, diagnostic, emit, request_context
 from app.errors import ApiError
 from app.params import parse_options
 from app.snapshots import PostgresSnapshots
@@ -97,7 +97,9 @@ def create_app(
     @application.middleware("http")
     async def authenticate(request: Request, call_next):
         started = time.perf_counter()
-        request.state.request_id = (request_context.get() or {}).get("request_id", str(uuid.uuid4()))
+        request.state.request_id = (request_context.get() or {}).get(
+            "request_id", str(uuid.uuid4())
+        )
         request.state.rate = None
         token = settings.api_token.get_secret_value()
         is_documentation = request.method == "GET" and request.url.path in {

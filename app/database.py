@@ -1,4 +1,3 @@
-from app.diagnostics import diagnostic, emit
 import os
 from contextlib import contextmanager
 from pathlib import Path
@@ -9,6 +8,7 @@ from psycopg.conninfo import conninfo_to_dict
 from psycopg.rows import dict_row
 
 from app.config import Settings
+from app.diagnostics import diagnostic, emit
 from app.errors import ApiError
 
 
@@ -62,7 +62,13 @@ def _run_query(settings: Settings, sql: str, values: dict, readonly: bool) -> li
     except ApiError:
         raise
     except (psycopg.Error, OSError, ValueError) as error:
-        emit("dependency_failed", level="ERROR", dependency="postgresql", stage="execute_query", **diagnostic(error))
+        emit(
+            "dependency_failed",
+            level="ERROR",
+            dependency="postgresql",
+            stage="execute_query",
+            **diagnostic(error),
+        )
         raise ApiError(503, "source_unavailable", "A fonte PostgreSQL está indisponível.") from None
 
 

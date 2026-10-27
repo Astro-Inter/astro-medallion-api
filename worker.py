@@ -1,4 +1,3 @@
-from app.diagnostics import diagnostic, emit
 """FastAPI and daily capture for Cloudflare Workers."""
 
 import re
@@ -9,6 +8,7 @@ from workers import WorkerEntrypoint, asgi
 
 from app.catalog import DATASETS
 from app.config import Settings
+from app.diagnostics import diagnostic, emit
 from app.errors import ApiError
 from app.main import create_app
 from app.snapshots import PostgresSnapshots
@@ -48,7 +48,14 @@ class Default(WorkerEntrypoint):
                     rows = await connection.fetch(statement, *(values[key] for key in keys))
                     return [dict(row) for row in rows]
             except (asyncpg.PostgresError, OSError, TimeoutError) as error:
-                emit("dependency_failed", level="ERROR", dependency="postgresql", stage=stage, timeout_ms=10000, **diagnostic(error))
+                emit(
+                    "dependency_failed",
+                    level="ERROR",
+                    dependency="postgresql",
+                    stage=stage,
+                    timeout_ms=10000,
+                    **diagnostic(error),
+                )
                 raise ApiError(
                     503, "source_unavailable", "A fonte PostgreSQL está indisponível."
                 ) from None

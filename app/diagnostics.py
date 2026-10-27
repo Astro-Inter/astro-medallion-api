@@ -18,7 +18,11 @@ def diagnostic(error):
     current = error
     while isinstance(current, BaseException) and id(current) not in seen and len(seen) < 5:
         seen.add(id(current))
-        code = getattr(current, "sqlstate", None) or getattr(current, "pgcode", None) or getattr(current, "errno", None)
+        code = (
+            getattr(current, "sqlstate", None)
+            or getattr(current, "pgcode", None)
+            or getattr(current, "errno", None)
+        )
         if code is not None and re.fullmatch(r"[A-Z0-9_]{1,32}", str(code)):
             result["error_code"] = str(code)
         causes.append(type(current).__name__)
@@ -26,7 +30,9 @@ def diagnostic(error):
             filename = PurePath(frame.filename).name
             if re.fullmatch(r"[A-Za-z0-9_.-]+", filename):
                 frames.append(f"{filename}:{frame.lineno}:{frame.name}")
-        current = current.__cause__ or (None if current.__suppress_context__ else current.__context__)
+        current = current.__cause__ or (
+            None if current.__suppress_context__ else current.__context__
+        )
     result["error_causes"] = " > ".join(causes)
     result["error_frames"] = " > ".join(frames[-16:])
     return result
@@ -58,7 +64,11 @@ class HttpObservability:
             if message.get("type") == "http.response.start":
                 status = message["status"]
                 message = dict(message)
-                message["headers"] = [(key, value) for key, value in message.get("headers", []) if key.lower() != b"x-request-id"]
+                message["headers"] = [
+                    (key, value)
+                    for key, value in message.get("headers", [])
+                    if key.lower() != b"x-request-id"
+                ]
                 message["headers"].append((b"x-request-id", observation["request_id"].encode()))
             await send(message)
 
@@ -68,11 +78,18 @@ class HttpObservability:
             emit("request_failed", level="ERROR", sink=self.sink, **diagnostic(error))
             raise
         finally:
-            observation.update(http_method=scope.get("method", "OTHER"),
-                               http_route=getattr(scope.get("route"), "path", "unmatched"),
-                               http_status=status, duration_ms=round((time.perf_counter() - start) * 1000, 2))
+            observation.update(
+                http_method=scope.get("method", "OTHER"),
+                http_route=getattr(scope.get("route"), "path", "unmatched"),
+                http_status=status,
+                duration_ms=round((time.perf_counter() - start) * 1000, 2),
+            )
             try:
                 if self.terminal:
-                    emit("http_request_finished", level="ERROR" if status >= 500 else "WARNING" if status >= 400 else "INFO", sink=self.sink)
+                    emit(
+                        "http_request_finished",
+                        level="ERROR" if status >= 500 else "WARNING" if status >= 400 else "INFO",
+                        sink=self.sink,
+                    )
             finally:
                 request_context.reset(token)
