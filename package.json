@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "cloudflare:prepare": "pywrangler sync",
-    "cloudflare:deploy": "node node_modules/wrangler/bin/wrangler.js deploy",
+    "cloudflare:edge:prepare": "node edge/build.mjs",
+    "cloudflare:edge:preview": "node node_modules/wrangler/bin/wrangler.js versions upload --config wrangler.edge.jsonc --keep-vars",
+    "cloudflare:prepare": "node edge/build.mjs",
+    "cloudflare:deploy": "node node_modules/wrangler/bin/wrangler.js deploy --config wrangler.edge.jsonc --keep-vars",
     "test:sql": "node tests/sql_contract.mjs"
   },
   "devDependencies": {
@@ -13,5 +15,8 @@
   },
   "overrides": {
     "sharp": "^0.35.5"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
   }
 }

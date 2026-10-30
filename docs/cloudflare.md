@@ -1,5 +1,14 @@
 # Cloudflare Workers Free (SCRUM-430)
 
+## Atualização em 30/10/2026
+
+O serviço atual executa JavaScript nativo via `wrangler.edge.jsonc` para reduzir
+CPU e evitar o erro de runtime Python observado na ingestão do BI. Use
+`npm run cloudflare:prepare` e `npm run cloudflare:deploy` para essa implementação.
+As seções Python abaixo descrevem a implantação anterior; não executar seu
+deploy para atualizar o serviço atual. Regras SQL, snapshots, token e destinos
+Grafana foram preservados. Detalhes e limites em [Worker JavaScript](worker-javascript.md).
+
 ## Grafana Cloud
 
 A exportação nativa de OpenTelemetry usa dois destinos da conta Cloudflare:

@@ -5,6 +5,12 @@ medalhão ao Databricks. Card: SCRUM-423. Versão: 0.2.0 / contrato JSON 2.0.
 
 Swagger publicado: https://astro-medallion-api.app-4str0.workers.dev/docs
 
+Em 30/10/2026, o serviço Cloudflare passou a executar o Worker JavaScript nativo
+em `edge/worker.mjs` para reduzir CPU e remover o erro de runtime Python da carga
+do BI. As regras SQL continuam exportadas das camadas Python; FastAPI permanece
+disponível localmente. Para publicar essa implementação, usar explicitamente
+`wrangler.edge.jsonc`. Ver [operação do Worker](docs/worker-javascript.md).
+
 ## Camadas
 
 - Bronze: onze fontes com textos normalizados, deduplicação por chave e
