@@ -2,6 +2,11 @@ from app.models import physical
 
 DATASETS = (
     physical("unidade", "nome id_unidade", "id_unidade"),
+    physical(
+        "unidade_endereco",
+        "unidade_id rua numero cidade bairro estado complemento geolocalizacao",
+        "unidade_id",
+    ),
     physical("usuario", "id_usuario unidade_id cargo_id tipo status nome", "id_usuario"),
     physical("dim_nr_catalogo", "codigo_nr id_unidade", "id_unidade codigo_nr"),
     physical(

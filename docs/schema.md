@@ -13,6 +13,7 @@ A cÃ³pia da procedure em `reference/` documenta a regra de origem.
 | Fonte | Campos pÃºblicos solicitados | Chave / relaÃ§Ãµes |
 | --- | --- | --- |
 | unidade | nome, id_unidade | id_unidade |
+| unidade_endereco | unidade_id, rua, numero, cidade, bairro, estado, complemento, geolocalizacao | unidade_id referencia unidade.id_unidade; chave primaria unidade_id |
 | usuario | id_usuario, unidade_id, cargo_id, tipo, status, nome | unidade_id â†’ unidade; cargo_id â†’ cargo |
 | dim_nr_catalogo | codigo_nr, id_unidade | view; par id_unidade/codigo_nr |
 | turma_colaborador | usuario_id, turma_id | usuario_id â†’ usuario; turma_id â†’ turma |

@@ -14,12 +14,26 @@ Dados, catálogo e saúde exigem `Authorization: Bearer <API_TOKEN>`.
 
 - `GET /health`: disponibilidade do processo, sem consultar o banco.
 - `GET /health/db`: executa `SELECT 1`; 503 se a fonte estiver indisponível.
-- `GET /v1/datasets`: 15 datasets e seus tipos/regras de histórico.
+- `GET /v1/datasets`: 16 datasets e seus tipos/regras de histórico.
 - `GET /v1/bronze/{nome}`: snapshot diário normalizado da fonte.
 - `GET /v1/silver/{nome}`: calendário ou posição/resumo com SCD Tipo 2.
 - `GET /v1/gold/fato_historico_geral_unidade`: snapshot diário persistido.
 
 ## Bronze
+
+`GET /v1/bronze/unidade_endereco` publica `unidade_id`, `rua`, `numero`,
+`cidade`, `bairro`, `estado`, `complemento` e `geolocalizacao`, além de
+`snapshot_date`. A coluna `cep` é excluída da projeção SQL, do catálogo público
+e dos snapshots criados pela API. A chave é `unidade_id`, relacionada a
+`unidade.id_unidade`, com tipo lógico `integer` (string decimal no JSON).
+Os demais campos têm tipo lógico `string`. `numero` permanece texto para
+aceitar valores como `120-A` e `S/N`, com a normalização textual já usada na
+Bronze (minúsculas, BTRIM e vazio convertido em NULL).
+`geolocalizacao` é extraída de POINT como texto `(longitude,latitude)`;
+coordenadas ausentes permanecem NULL. `estado` também segue a normalização
+para minúsculas. Os snapshots começam na primeira captura após a publicação,
+sem reconstruir dias anteriores. A fonte deve existir no banco e o papel da
+API precisa de SELECT em `public.unidade_endereco`.
 
 O dataset `usuario` publica `cargo_id`, relacionado a `cargo.id_cargo`, como
 identificador inteiro (string decimal no JSON, ou NULL quando ausente).
@@ -60,7 +74,7 @@ de bancos novos, sem migrar bancos existentes.
 Snapshots já capturados preservam o payload original e não recebem o IP
 retroativamente; as próximas capturas diárias incluem `cliente_ip`.
 
-As onze fontes usam os nomes atuais do PostgreSQL, acrescentando `snapshot_date` às
+As doze fontes usam os nomes atuais do PostgreSQL, acrescentando `snapshot_date` às
 projeções anteriores e expondo `id_conformidade` como chave pública de conformidade.
 Textos são convertidos para minúsculas e aparados com BTRIM; strings vazias viram
 NULL. A exceção é `evento_astro.firebase_uid`, preservado integralmente.
@@ -72,7 +86,7 @@ isso não representa seleção de uma versão mais recente. Chave obrigatória n
 impede a publicação de todo o snapshot e retorna 503 `invalid_source_data`.
 
 `from` e `to` filtram **datas de captura**, não datas de criação/modificação do
-registro. Assim todas as onze fontes suportam períodos, inclusive fontes sem
+registro. Assim todas as doze fontes suportam períodos, inclusive fontes sem
 timestamp de negócio. A saída inclui uma versão por registro/dia e
 `snapshot_date` distingue essas versões. O padrão é hoje. Dias sem captura
 retornam 409; passado nunca é reconstruído a partir do cadastro atual.
