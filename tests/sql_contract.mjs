@@ -28,6 +28,9 @@ async function run(statement, overrides = {}) {
 try {
   await db.exec(`
     CREATE TABLE public.unidade(id_unidade bigint, nome text);
+    CREATE TABLE public.unidade_endereco(unidade_id bigint PRIMARY KEY, cep varchar(8),
+      rua varchar(255), numero varchar(30), cidade varchar(255), bairro varchar(255),
+      estado varchar(2), complemento varchar(255), geolocalizacao point);
     CREATE TABLE public.cargo(id_cargo bigint PRIMARY KEY, nome text);
     CREATE TABLE public.usuario(id_usuario bigint PRIMARY KEY, nome text, tipo text,
       status text, unidade_id bigint, cargo_id bigint, criado_em timestamp);

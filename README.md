@@ -13,7 +13,7 @@ disponível localmente. Para publicar essa implementação, usar explicitamente
 
 ## Camadas
 
-- Bronze: onze fontes com textos normalizados, deduplicação por chave e
+- Bronze: doze fontes com textos normalizados, deduplicação por chave e
   snapshots diários. Filtros de data referem-se à captura, não a mudanças da fonte.
 - Silver: calendário, posição histórica via SCD Tipo 2 e resumo por unidade/dia
   com linhas zeradas.
@@ -22,8 +22,9 @@ disponível localmente. Para publicar essa implementação, usar explicitamente
 
 A API acessa as fontes por leitura. Escreve somente nas estruturas de controle
 do schema `astro_api`; não grava diretamente no Databricks. O consumidor em
-`databricks/ingest_api.py` grava as 15 tabelas no schema silver sem prefixos,
-com 14 cargas diárias e a fato semanal.
+`databricks/ingest_api.py` grava as 16 tabelas no schema silver sem prefixos,
+com 15 cargas diárias e a fato semanal. A nova fonte `unidade_endereco` publica
+os campos do endereço e a geolocalização, sem a coluna `cep`.
 
 ## Executar localmente
 

@@ -154,7 +154,7 @@ class ApiTests(unittest.TestCase):
     def test_catalog_types_and_public_docs(self):
         with self.client() as client:
             body = client.get("/v1/datasets", headers=HEADERS).json()
-            self.assertEqual(len(body["datasets"]), 15)
+            self.assertEqual(len(body["datasets"]), 16)
             for dataset in body["datasets"]:
                 self.assertEqual(set(dataset["columns"]), set(dataset["column_types"]))
             self.assertEqual(client.get("/docs").status_code, 200)

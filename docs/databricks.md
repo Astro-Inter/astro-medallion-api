@@ -7,9 +7,14 @@ mesmo notebook: um com o parâmetro `load_mode=daily` e outro com
 
 Todos os datasets são gravados no catálogo/schema configurado no arquivo
 (`workspace.silver` por padrão), usando o nome original publicado pela API, sem
-prefixo de camada. A carga diária inclui os onze datasets Bronze e os três
+prefixo de camada. A carga diária inclui os doze datasets Bronze e os três
 Silver; a semanal inclui somente `fato_historico_geral_unidade`. A origem da
 API continua respeitando as rotas e camadas Bronze, Silver e Gold.
+
+`unidade_endereco` entra automaticamente na seleção diária pelo catálogo,
+com os campos de endereço e `geolocalizacao`, sem `cep`. A tabela de destino
+é `workspace.silver.unidade_endereco` na configuração padrão. A ligação com
+`unidade` usa `unidade_endereco.unidade_id = unidade.id_unidade`.
 
 ## Chamadas HTTP
 

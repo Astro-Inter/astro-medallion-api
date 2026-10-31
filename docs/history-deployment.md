@@ -22,8 +22,14 @@ banco/Worker. Este repositório não aplica migrações durante requests.
    01h e 02h (03h, 04h e 05h UTC). Cada snapshot diário é publicado uma única
    vez. A primeira chamada de hoje também pode criar a captura daquele dataset.
 6. Atualizar clientes para seguir pagination.next inteira. O consumidor em
-   `databricks/ingest_api.py` foi ajustado e mantém as 14 cargas diárias e a fato
+   `databricks/ingest_api.py` foi ajustado e mantém as 15 cargas diárias e a fato
    semanal no schema silver com nomes sem prefixo.
+
+Para a fonte `unidade_endereco`, confirmar que `public.unidade_endereco`
+existe e que o papel do runtime tem SELECT nessa tabela. A API não cria nem
+altera a fonte. O catálogo e as estruturas existentes de snapshots já atendem
+ao novo dataset; não é necessária uma nova migração no schema `astro_api`.
+A projeção inclui todos os campos definidos no modelo de origem, exceto `cep`.
 
 ## Histórico e falhas
 
